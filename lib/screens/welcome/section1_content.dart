@@ -36,7 +36,7 @@ class _Section1ContentState extends State<Section1Content> {
                     DynamicSizeService.calculateAspectRatioSize(
                         context, 0.030)),
                 child: SelectableText(
-                    "Congressional Road, Clamor Ave., Bagumbong Caloocan City\nTel. Nos. 0282-444-264 Mobile No. 09189851295",
+                    "${Provider.of<GlobalState>(context, listen: false).configAddr.value}\n${Provider.of<GlobalState>(context, listen: false).configCont.value}",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: DynamicSizeService.calculateAspectRatioSize(

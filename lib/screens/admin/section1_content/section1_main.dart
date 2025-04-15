@@ -12,6 +12,7 @@ import 'package:sis_project/services/global_state.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_on_hover/animate_on_hover.dart';
+import 'package:animated_flip_counter/animated_flip_counter.dart';
 
 class AdminFirstSection extends StatefulWidget {
   const AdminFirstSection({super.key});
@@ -26,6 +27,7 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
   late AnalyticsModel AnalyticsData;
   late Timestamp timeNow;
   late String query = '';
+  late int socialTraffic, sisTraffic;
   double sortBy = 0;
 
   @override
@@ -33,10 +35,12 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     super.initState();
     timeNow = Timestamp.fromDate(DateTime.now());
     AnalyticsData = AnalyticsModel(
-        studentsEnrolled: 0,
-        educatorsEmployed: 0,
-        systemTraffic: 0,
-        socialTraffic: 0);
+      studentsEnrolled: 0,
+      educatorsEmployed: 0,
+      systemTraffic: 0,
+      socialTraffic: 0,
+    );
+    _loadTrafficLogs();
     _fetchAnalytics();
     _fetchPubList();
   }
@@ -56,17 +60,58 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
       final educatorsTotalQS =
           await entityCollection.where('entity', isEqualTo: 1).get();
       setState(() {
-        AnalyticsData = AnalyticsModel(
-            studentsEnrolled: studentsTotalQS.size,
-            educatorsEmployed: educatorsTotalQS.size,
-            systemTraffic: 12,
-            socialTraffic: 17);
+        AnalyticsData.studentsEnrolled = studentsTotalQS.size;
+        AnalyticsData.educatorsEmployed = educatorsTotalQS.size;
       });
+
       useToastify.showLoadingToast(
           context, 'Loaded', 'Analytical data fetched successfully.');
     } catch (e) {
       useToastify.showErrorToast(context, 'Error', 'Failed to load analytics.');
       print(e);
+    }
+  }
+
+  Future<void> _loadTrafficLogs() async {
+    int social = await _fetchTrafficLog('social');
+    int sis = await _fetchTrafficLog('sis');
+
+    setState(() {
+      socialTraffic = social;
+      sisTraffic = sis;
+      AnalyticsData.systemTraffic = sis;
+      AnalyticsData.socialTraffic = social;
+    });
+  }
+
+  Future<int> _fetchTrafficLog(String type) async {
+    try {
+      String formattedDate = DateFormat('MMMM d, y').format(DateTime.now());
+      CollectionReference trafficCollection =
+          FirebaseFirestore.instance.collection("trafficlog");
+
+      QuerySnapshot querySnapshot = await trafficCollection
+          .where("timestamp", isEqualTo: formattedDate)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var docData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        int sis = docData['sis-traffic'] ?? 0;
+        int social = docData['social-traffic'] ?? 0;
+
+        if (type == 'sis') {
+          return sis;
+        } else if (type == 'social') {
+          return social;
+        } else {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      print('Error fetching traffic log: $e');
+      return 0;
     }
   }
 
@@ -209,13 +254,13 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedBackpack01,
-                          '${AnalyticsData.studentsEnrolled}',
+                          AnalyticsData.studentsEnrolled,
                           'STUDENTS ENROLLED',
                           'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
                           context),
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedSchoolTie,
-                          '${AnalyticsData.educatorsEmployed}',
+                          AnalyticsData.educatorsEmployed,
                           'EDUCATORS EMPLOYED',
                           'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
                           context),
@@ -223,15 +268,15 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedAnalytics03,
-                          '${AnalyticsData.systemTraffic}',
+                          AnalyticsData.systemTraffic,
                           'SIS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")} region.',
+                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}region',
                           context),
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedTrafficJam02,
-                          '${AnalyticsData.socialTraffic}',
+                          AnalyticsData.socialTraffic,
                           'SOCIALS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")} region.',
+                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}cregion',
                           context)
                     ])
                   ],
@@ -435,7 +480,7 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                     context, 0.013))));
   }
 
-  Widget _buildAnalyticsCard(IconData icon, String data, String label,
+  Widget _buildAnalyticsCard(IconData icon, num data, String label,
       String description, BuildContext context) {
     return Padding(
         padding: EdgeInsets.all(
@@ -475,8 +520,10 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                              Text(data,
-                                  style: TextStyle(
+                              AnimatedFlipCounter(
+                                  value: data,
+                                  duration: Duration(milliseconds: 1000),
+                                  textStyle: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: DynamicSizeService
                                           .calculateAspectRatioSize(

@@ -164,7 +164,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 FirebaseAuth.instance.signOut();
                 web.window.open('./?session=false', '_self');
               },
-              child: Text("SIGN OUT",
+              child: Text("SIGN OUT", 
                   style: TextStyle(
                     fontSize: DynamicSizeService.calculateAspectRatioSize(
                         context, 0.016),

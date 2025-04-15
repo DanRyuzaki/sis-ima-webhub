@@ -1,8 +1,8 @@
 class AnalyticsModel {
-  final int studentsEnrolled;
-  final int educatorsEmployed;
-  final int systemTraffic;
-  final int socialTraffic;
+  int studentsEnrolled;
+  int educatorsEmployed;
+  int systemTraffic;
+  int socialTraffic;
 
   AnalyticsModel({
     required this.studentsEnrolled,

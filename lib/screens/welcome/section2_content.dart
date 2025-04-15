@@ -4,6 +4,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:sis_project/constants.dart';
 import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
+import 'package:provider/provider.dart';
+import 'package:sis_project/services/global_state.dart';
 
 class Section2Content extends StatelessWidget {
   const Section2Content({Key? key}) : super(key: key);
@@ -19,24 +21,32 @@ class Section2Content extends StatelessWidget {
           _buildProgramCard(
               HugeIcons.strokeRoundedBackpack01,
               WELCOME_PROGRAM_OFFERINGS_TITLE[0],
-              WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[0],
+              Provider.of<GlobalState>(context, listen: false)
+                  .configDept1
+                  .value,
               context),
           _buildProgramCard(
               HugeIcons.strokeRoundedStudent,
               WELCOME_PROGRAM_OFFERINGS_TITLE[1],
-              WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[1],
+              Provider.of<GlobalState>(context, listen: false)
+                  .configDept2
+                  .value,
               context),
         ]),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           _buildProgramCard(
               HugeIcons.strokeRoundedSchoolTie,
               WELCOME_PROGRAM_OFFERINGS_TITLE[2],
-              WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[2],
+              Provider.of<GlobalState>(context, listen: false)
+                  .configDept3
+                  .value,
               context),
           _buildProgramCard(
               HugeIcons.strokeRoundedStudents,
               WELCOME_PROGRAM_OFFERINGS_TITLE[3],
-              WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[3],
+              Provider.of<GlobalState>(context, listen: false)
+                  .configDept4
+                  .value,
               context)
         ])
       ])),

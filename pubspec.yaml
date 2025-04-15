@@ -49,6 +49,7 @@ dependencies:
   intl: ^0.20.2
   animate_on_hover: ^1.0.2
   web_browser_detect: ^2.1.0
+  animated_flip_counter: ^0.3.4
 
 dev_dependencies:
   flutter_test:

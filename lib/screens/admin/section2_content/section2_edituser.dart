@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sis_project/models/authModel.dart';
@@ -310,6 +312,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
     if (_formKey.currentState!.validate()) {
       CollectionReference entityCollection =
           FirebaseFirestore.instance.collection("entity");
+
       QuerySnapshot querySnapshot = await entityCollection
           .where("userMail", isEqualTo: user.userMail)
           .get();
@@ -317,38 +320,50 @@ class _EditUserDialogState extends State<EditUserDialog> {
       String userId = _userIdController.text.trim();
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
-      String email = _emailController.text.trim();
-      String userKey = _userKeyController.text.trim();
+      String newEmail = _emailController.text.trim();
+      String newUserKey = _userKeyController.text.trim();
+      String oldEmail = user.userMail;
+      String oldUserKey = user.userKey;
 
       try {
-        print('Form Modification Submitted');
-        print('User ID: $userId');
-        print('First Name: $firstName');
-        print('Last Name: $lastName');
-        print('Email: $email');
-        print('User Key: $userKey');
-        print('Entity Type: $_entityType');
-        entityCollection.doc(querySnapshot.docs.first.id).update({
+        FirebaseApp tempApp = await Firebase.initializeApp(
+          name: 'TempAppForUpdate',
+          options: Firebase.app().options,
+        );
+
+        UserCredential tempCredential = await FirebaseAuth.instanceFor(
+                app: tempApp)
+            .signInWithEmailAndPassword(email: oldEmail, password: oldUserKey);
+        User tempUser = tempCredential.user!;
+
+        await tempUser.delete();
+
+        await FirebaseAuth.instanceFor(app: tempApp)
+            .createUserWithEmailAndPassword(
+                email: newEmail, password: newUserKey);
+
+        await tempApp.delete();
+        await entityCollection.doc(querySnapshot.docs.first.id).update({
           'userID': userId,
           'userName00': firstName,
           'userName01': lastName,
           'entity': _getEntityValue(_entityType),
-          'userMail': email,
-          'userKey': userKey,
+          'userMail': newEmail,
+          'userKey': newUserKey,
           'userPhotoID': 'default',
-          'lastSession': Timestamp.fromDate(DateTime.now())
+          'lastSession': Timestamp.fromDate(DateTime.now()),
         });
 
         Navigator.of(context).pop();
         onRefresh();
-        useToastify.showLoadingToast(
-            context, "Successful Modification", "$userId's account altered!");
+        useToastify.showLoadingToast(context, "Successful Modification",
+            "$userId's account credentials have been updated!");
       } catch (e) {
         Navigator.of(context).pop();
         onRefresh();
         useToastify.showErrorToast(context, "Error",
-            "Failed to modify the entity. Please contact the developer.");
-        print(e);
+            "Failed to update the credentials. Please contact the developer.");
+        print("Force Update Error: $e");
       }
     }
   }
@@ -382,23 +397,47 @@ class _EditUserDialogState extends State<EditUserDialog> {
         QuerySnapshot querySnapshot =
             await entityCollection.where("userID", isEqualTo: originalId).get();
 
-        if (querySnapshot.docs.isNotEmpty) {
-          await entityCollection.doc(querySnapshot.docs.first.id).delete();
-
-          Navigator.of(context).pop();
-          onRefresh();
-          useToastify.showLoadingToast(context, "Deleted Successfully",
-              "$originalId has been removed from the database.");
-        } else {
+        if (querySnapshot.docs.isEmpty) {
           Navigator.of(context).pop();
           useToastify.showErrorToast(context, "User Not Found",
               "No entity found with user ID: $originalId");
+          return;
         }
+
+        // ✅ Delete Firebase Auth user from temp app
+        FirebaseApp tempApp = await Firebase.initializeApp(
+          name: 'TempDeleteApp',
+          options: Firebase.app().options,
+        );
+
+        try {
+          // Use the stored email and password (key) to sign in
+          String email = user.userMail;
+          String password = user.userKey;
+
+          UserCredential credential =
+              await FirebaseAuth.instanceFor(app: tempApp)
+                  .signInWithEmailAndPassword(email: email, password: password);
+
+          await credential.user!.delete();
+        } catch (authError) {
+          print("Auth delete failed: $authError");
+        } finally {
+          await tempApp.delete();
+        }
+
+        // ✅ Delete Firestore document
+        await entityCollection.doc(querySnapshot.docs.first.id).delete();
+
+        Navigator.of(context).pop();
+        onRefresh();
+        useToastify.showLoadingToast(context, "Deleted Successfully",
+            "$originalId has been removed from the system.");
       } catch (e) {
         Navigator.of(context).pop();
         useToastify.showErrorToast(context, "Error",
             "Failed to delete the user. Please contact the developer.");
-        print("Delete Error: $e");
+        print("Full Delete Error: $e");
       }
     }
   }

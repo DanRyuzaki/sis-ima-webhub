@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sis_project/models/authModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
+import 'package:sis_project/models/configModel.dart';
 import 'package:sis_project/screens/admin/admin_screen.dart';
 import 'package:sis_project/screens/student/student_screen.dart';
 import 'package:sis_project/screens/teacher/teacher_screen.dart';
@@ -24,6 +25,7 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
   void initState() {
     super.initState();
     _initializeUser();
+   
   }
 
   Future<void> _initializeUser() async {
@@ -36,6 +38,28 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> fetchAndStoreConfigs(BuildContext context) async {
+    try {
+      CollectionReference configCollection =
+          FirebaseFirestore.instance.collection("config");
+      QuerySnapshot configSnapshot = await configCollection.get();
+
+      List<ConfigModel> configList = configSnapshot.docs.map((doc) {
+        return ConfigModel(
+          id: doc.get("id"),
+          category: doc.get("category"),
+          name: doc.get("name"),
+          value: doc.get("value"),
+        );
+      }).toList();
+
+      Provider.of<GlobalState>(context, listen: false)
+          .updateGlobalConfigs(configList);
+    } catch (e) {
+      print("Error fetching configs: $e");
+    }
   }
 
   Future<void> _fetchUserData(String? userEmail) async {

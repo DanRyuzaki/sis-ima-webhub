@@ -31,7 +31,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
       await _fetchUserData(userCredential.user!.email);
       useToastify.showLoadingToast(context, "Welcome ${user.firstName}!",
           "You're successfully logged in");
-      await _sisTrafficLog;
+      await _sisTrafficLog();
 
       web.window.open(
           './?session=true&page=${Provider.of<GlobalState>(context, listen: false).entityType}',
@@ -46,8 +46,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
   Future<void> _fetchUserData(String? userEmail) async {
     try {
       final entityCollection = FirebaseFirestore.instance.collection("entity");
-
-      QuerySnapshot querySnapshot =
+      final querySnapshot =
           await entityCollection.where("userMail", isEqualTo: userEmail).get();
 
       if (querySnapshot.docs.isNotEmpty) {
@@ -83,33 +82,37 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
   Future<void> _sisTrafficLog() async {
     try {
       String formattedDate = DateFormat('MMMM d, y').format(DateTime.now());
-      final trafficCollection =
+      CollectionReference trafficCollection =
           FirebaseFirestore.instance.collection("trafficlog");
-      QuerySnapshot tlQS = await trafficCollection
+
+      QuerySnapshot querySnapshot = await trafficCollection
           .where("timestamp", isEqualTo: formattedDate)
           .get();
-      if (tlQS.docs.isEmpty) {
-        trafficCollection.add({
+
+      if (querySnapshot.docs.isEmpty) {
+        await trafficCollection.add({
           'timestamp': formattedDate,
-          'social-traffic': 1,
-          'sis-traffic': 1
+          'social-traffic': 0,
+          'sis-traffic': 1,
         });
-        print('tlQS.docs.isEmpty = true');
+        print('Traffic log created for $formattedDate');
       } else {
-        var doc = tlQS.docs.first;
-        traffic = TrafficLogModel(
-            sistraffic: doc.get('sis-traffic'),
-            socialtraffic: doc.get('social-traffic'),
-            timestamp: doc.get('timestamp'));
-        trafficCollection.doc(tlQS.docs.first.id).update({
+        var docSnapshot = querySnapshot.docs.first;
+        var docData = docSnapshot.data() as Map<String, dynamic>;
+        int currentSisTraffic = docData['sis-traffic'] ?? 0;
+        int currentSocialTraffic = docData['social-traffic'] ?? 0;
+
+        await docSnapshot.reference.set({
           'timestamp': formattedDate,
-          'social-traffic': traffic.sistraffic + 1,
-          'sis-traffic': traffic.socialtraffic + 1
-        });
-        print('tlQS.docs.isEmpty = false');
+          'social-traffic': currentSocialTraffic,
+          'sis-traffic': currentSisTraffic + 1,
+        }, SetOptions(merge: true));
+
+        print('Traffic log updated for $formattedDate: '
+            '${currentSocialTraffic} social, ${currentSisTraffic + 1} sis');
       }
     } catch (e) {
-      print(e);
+      print('Error updating traffic log: $e');
     }
   }
 
@@ -215,5 +218,12 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _InputUserController.dispose();
+    _InputKeyController.dispose();
+    super.dispose();
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/models/configModel.dart';
+import 'package:sis_project/screens/admin/section5_content/section5_editconfig.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:web_browser_detect/web_browser_detect.dart';
 
@@ -40,6 +41,7 @@ class _AdminFifthSectionState extends State<AdminFifthSection> {
 
       configDataFetch = configQS.docs.map((doc) {
         return ConfigModel(
+            id: doc.get('id'),
             category: doc.get('category'),
             name: doc.get('name'),
             value: doc.get('value'));
@@ -226,6 +228,12 @@ class _AdminFifthSectionState extends State<AdminFifthSection> {
     return InkWell(
         onTap: () => useToastify.showLoadingToast(context, 'Edit?',
             'To edit \'${config.name}\', double-tap this segment.'),
+        onDoubleTap: () => showDialog(
+            context: context,
+            builder: (context) => EditConfigDialog(
+                onRefresh: _refreshConfigList,
+                configDataDeployed: configDataDeployed,
+                config: config)),
         child: Card(
           elevation: 0.5,
           color: Color.fromARGB(255, 253, 253, 253),
@@ -258,5 +266,15 @@ class _AdminFifthSectionState extends State<AdminFifthSection> {
         ),
       ),
     );
+  }
+
+  Future<void> _refreshConfigList() async {
+    setState(() {
+      isConfigListLoaded = false;
+      configDataFetch.clear();
+      configDataDeployed.clear();
+    });
+
+    await _fetchConfigList();
   }
 }

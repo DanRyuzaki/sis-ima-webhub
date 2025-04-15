@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sis_project/constants.dart';
 import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
+import 'package:provider/provider.dart';
+import 'package:sis_project/services/global_state.dart';
 
 class Section3Content extends StatelessWidget {
   const Section3Content({Key? key}) : super(key: key);
@@ -18,12 +20,24 @@ class Section3Content extends StatelessWidget {
           Expanded(
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            _buildInstitutionInfo(WELCOME_INSTITUTION_INFO[0],
-                WELCOME_INSTITUTION_INFO[3], context),
-            _buildInstitutionInfo(WELCOME_INSTITUTION_INFO[1],
-                WELCOME_INSTITUTION_INFO[4], context),
-            _buildInstitutionInfo(WELCOME_INSTITUTION_INFO[2],
-                WELCOME_INSTITUTION_INFO[5], context)
+            _buildInstitutionInfo(
+                WELCOME_INSTITUTION_INFO[0],
+                Provider.of<GlobalState>(context, listen: false)
+                    .configVmgo1
+                    .value,
+                context),
+            _buildInstitutionInfo(
+                WELCOME_INSTITUTION_INFO[1],
+                Provider.of<GlobalState>(context, listen: false)
+                    .configVmgo2
+                    .value,
+                context),
+            _buildInstitutionInfo(
+                WELCOME_INSTITUTION_INFO[2],
+                Provider.of<GlobalState>(context, listen: false)
+                    .configVmgo3
+                    .value,
+                context)
           ])),
           SizedBox(
               height: DynamicSizeService.calculateHeightSize(context, 0.05)),

@@ -1,12 +1,153 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sis_project/constants.dart';
+import 'package:sis_project/models/configModel.dart';
 
 class GlobalState with ChangeNotifier {
+  // Visibility and active section controls
   bool _isVisible = false;
   String _activeSection = 'HOME';
 
   bool get isVisible => _isVisible;
   String get activeSection => _activeSection;
+
+  // Individual configuration fields (for quick access)
+  ConfigModel _configAddr = ConfigModel(
+          id: '0',
+          category: '1=main',
+          name: 'address',
+          value: 'Congressional Road, Clamor Ave., Bagumbong Caloocan City'),
+      _configCont = ConfigModel(
+          id: '1',
+          category: '1=main',
+          name: 'contact',
+          value: 'Tel. Nos. 0282-444-264 Mobile No. 09189851295'),
+      _configDept1 = ConfigModel(
+          id: '2',
+          category: '2=department',
+          name: 'pre-school',
+          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[0]),
+      _configDept2 = ConfigModel(
+          id: '3',
+          category: '2=department',
+          name: 'elementary',
+          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[1]),
+      _configDept3 = ConfigModel(
+          id: '4',
+          category: '2=department',
+          name: 'junior high school',
+          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[2]),
+      _configDept4 = ConfigModel(
+          id: '5',
+          category: '2=department',
+          name: 'senior high school',
+          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[3]),
+      _vmgo1 = ConfigModel(
+          id: '6',
+          category: '3=vmgo',
+          name: 'mission',
+          value: WELCOME_INSTITUTION_INFO[3]),
+      _vmgo2 = ConfigModel(
+          id: '7',
+          category: '3=vmgo',
+          name: 'vision',
+          value: WELCOME_INSTITUTION_INFO[4]),
+      _vmgo3 = ConfigModel(
+          id: '8',
+          category: '3=vmgo',
+          name: 'objectives',
+          value: WELCOME_INSTITUTION_INFO[5]);
+
+  ConfigModel get configAddr => _configAddr;
+  ConfigModel get configCont => _configCont;
+  ConfigModel get configDept1 => _configDept1;
+  ConfigModel get configDept2 => _configDept2;
+  ConfigModel get configDept3 => _configDept3;
+  ConfigModel get configDept4 => _configDept4;
+  ConfigModel get configVmgo1 => _vmgo1;
+  ConfigModel get configVmgo2 => _vmgo2;
+  ConfigModel get configVmgo3 => _vmgo3;
+
+  // New: Global list for all config documents
+  List<ConfigModel> _globalConfigs = [];
+  List<ConfigModel> get globalConfigs => _globalConfigs;
+
+  /// Update individual config based on id.
+  void updateGlobalConfig(ConfigModel config, num id) {
+    switch (id) {
+      case 0:
+        _configAddr = config;
+        break;
+      case 1:
+        _configCont = config;
+        break;
+      case 2:
+        _configDept1 = config;
+        break;
+      case 3:
+        _configDept2 = config;
+        break;
+      case 4:
+        _configDept3 = config;
+        break;
+      case 5:
+        _configDept4 = config;
+        break;
+      case 6:
+        _vmgo1 = config;
+        break;
+      case 7:
+        _vmgo2 = config;
+        break;
+      case 8:
+        _vmgo3 = config;
+        break;
+      default:
+        _configAddr = config;
+        break;
+    }
+    notifyListeners();
+  }
+
+  /// Update the entire global config list from Firestore.
+  void updateGlobalConfigs(List<ConfigModel> newConfigs) {
+    _globalConfigs = newConfigs;
+    for (ConfigModel config in newConfigs) {
+      int id = int.tryParse(config.id) ?? -1;
+      switch (id) {
+        case 0:
+          _configAddr = config;
+          break;
+        case 1:
+          _configCont = config;
+          break;
+        case 2:
+          _configDept1 = config;
+          break;
+        case 3:
+          _configDept2 = config;
+          break;
+        case 4:
+          _configDept3 = config;
+          break;
+        case 5:
+          _configDept4 = config;
+          break;
+        case 6:
+          _vmgo1 = config;
+          break;
+        case 7:
+          _vmgo2 = config;
+          break;
+        case 8:
+          _vmgo3 = config;
+          break;
+        default:
+          break;
+      }
+    }
+    notifyListeners();
+  }
 
   void toggleIsActive() {
     _isVisible = !_isVisible;
@@ -18,6 +159,7 @@ class GlobalState with ChangeNotifier {
     notifyListeners();
   }
 
+  // User data fields.
   String _userID = '';
   String _userName00 = '';
   String _userName01 = '';
@@ -26,6 +168,7 @@ class GlobalState with ChangeNotifier {
   String _userKey = '';
   String _userPhotoID = '';
   Timestamp _lastSession = Timestamp.fromDate(DateTime.now());
+
   String get userID => _userID;
   String get userName00 => _userName00;
   String get userName01 => _userName01;
