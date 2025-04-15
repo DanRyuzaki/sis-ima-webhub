@@ -37,5 +37,5 @@ const List<String> WELCOME_INSTITUTION_INFO = [
 8. To develop personality and socially acceptable level of literacy in English and Filipino as basic tools for further learning.
 9. To develop individual capable of requesting human rights cooperation with the group, showing concern for others, accepting responsibilities and choosing right over wrong.
 10. To continue to promote the objectives of the elementary education, but shifting in emphasis from the mastery of basic tools of learning, expression and understanding to the use and extension of the tools for further exploring and acquiring intellectually social, moral and physical concepts, ideas, attitudes and skills in order to develop the whole human being; and
-11. To discover and enhance, in addition the different aptitude and interest of the individual student so as to equip him with skills for productive endeavor and thus prepare him for work in the real world and/or for further formal studies in higher education. """
+11. To discover and enhance, in addition the different aptitude and interest of the individual student so as to equip him with skills for productive endeavor and thus prepare him for work in the real world and/or for further formal studies in higher education."""
 ];

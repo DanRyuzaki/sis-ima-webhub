@@ -4,7 +4,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:sis_project/screens/admin/section1_content/section1_main.dart';
 import 'package:sis_project/screens/admin/section2_content/section2_main.dart';
+import 'package:sis_project/screens/admin/section3_content/section3_main.dart';
 import 'package:sis_project/screens/admin/section4_content/section4_main.dart';
+import 'package:sis_project/screens/admin/section5_content/section5_main.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
@@ -180,9 +182,11 @@ class _AdminScreenState extends State<AdminScreen> {
       case 1:
         return AdminSecondSection();
       case 2:
-        return const Text('Manage the school calendar.');
+        return AdminThirdSection();
       case 3:
         return AdminFourthSection();
+      case 4:
+        return AdminFifthSection();
       default:
         return const Text('Error loading content.');
     }

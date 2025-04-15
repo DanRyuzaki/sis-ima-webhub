@@ -21,13 +21,11 @@ class AdminFirstSection extends StatefulWidget {
 }
 
 class _AdminFirstSectionState extends State<AdminFirstSection> {
-  List<PubModel> PubDataFetch = [];
-  List<PubModel> PubDataDeployed = [];
+  List<PubModel> PubDataFetch = [], PubDataDeployed = [];
+  bool isPubListLoaded = false, isHeaderClicked = false;
   late AnalyticsModel AnalyticsData;
   late Timestamp timeNow;
   late String query = '';
-  bool isPubListLoaded = false;
-  bool isHeaderClicked = false;
   double sortBy = 0;
 
   @override
@@ -43,10 +41,9 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     _fetchPubList();
   }
 
-  String formatTimestamp(Timestamp timestamp) {
+  String formatTimestamp(Timestamp timestamp, String format) {
     DateTime dateTime = timestamp.toDate();
-    String formattedDate =
-        DateFormat("MMMM d, yyyy | EEEE | h:mm a 'UTC' Z").format(dateTime);
+    String formattedDate = DateFormat(format).format(dateTime);
 
     return formattedDate;
   }
@@ -177,15 +174,22 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                 SizedBox(
                     height:
                         DynamicSizeService.calculateHeightSize(context, 0.03)),
-                Text(
-                  "Dashboard",
-                  style: TextStyle(
-                    fontSize: DynamicSizeService.calculateAspectRatioSize(
-                        context, 0.035),
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(200, 0, 0, 0),
-                  ),
-                ),
+                Row(children: [
+                  Text("Dashboard",
+                      style: TextStyle(
+                        fontSize: DynamicSizeService.calculateAspectRatioSize(
+                            context, 0.035),
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(200, 0, 0, 0),
+                      )),
+                  Spacer(),
+                  Text(
+                      '${formatTimestamp(Timestamp.now(), "MMMM d, yyyy | EEEE | h:mm a")}',
+                      style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.013)))
+                ]),
                 Text(
                     'Welcome back, Admin ${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}!',
                     style: TextStyle(
@@ -207,27 +211,27 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                           HugeIcons.strokeRoundedBackpack01,
                           '${AnalyticsData.studentsEnrolled}',
                           'STUDENTS ENROLLED',
-                          'As of ${formatTimestamp(timeNow)}',
+                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
                           context),
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedSchoolTie,
                           '${AnalyticsData.educatorsEmployed}',
                           'EDUCATORS EMPLOYED',
-                          'As of ${formatTimestamp(timeNow)}',
+                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
                           context),
                     ]),
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedAnalytics03,
                           '${AnalyticsData.systemTraffic}',
-                          'SIS TRAFFIC (/hr)',
-                          'For ${formatTimestamp(timeNow)}',
+                          'SIS TRAFFIC (/day)',
+                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")} region.',
                           context),
                       _buildAnalyticsCard(
                           HugeIcons.strokeRoundedTrafficJam02,
                           '${AnalyticsData.socialTraffic}',
-                          'SOCIALS TRAFFIC (/hr)',
-                          'For of ${formatTimestamp(timeNow)}',
+                          'SOCIALS TRAFFIC (/day)',
+                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")} region.',
                           context)
                     ])
                   ],
@@ -424,7 +428,7 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
   Widget _buildTableRowCell(String text, int type) {
     return SizedBox(
         width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: Text(text,
+        child: SelectableText(text,
             style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: DynamicSizeService.calculateAspectRatioSize(

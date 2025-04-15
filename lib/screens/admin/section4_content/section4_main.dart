@@ -286,33 +286,29 @@ class _AdminFourthSectionState extends State<AdminFourthSection> {
   }
 
   Widget _buildTableRow(SysLogModel syslog) {
-    return InkWell(
-        onTap: () {},
-        child: Card(
-            elevation: 0.5,
-            color: Color.fromARGB(255, 253, 253, 253),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0)),
-            child: Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTableRowCell('${syslog.log_id}', 0),
-                      _buildTableRowCell(syslog.log_user, 1),
-                      _buildTableRowCell(_getEntityName(syslog.log_entity), 2),
-                      _buildTableRowCell(syslog.log_activity, 3),
-                      _buildTableRowCell(syslog.log_agent, 4),
-                      _buildTableRowCell(
-                          syslog.log_date.toDate().toString(), 5),
-                    ]))));
+    return Card(
+        elevation: 0.5,
+        color: Color.fromARGB(255, 253, 253, 253),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+        child: Padding(
+            padding: EdgeInsets.all(10),
+            child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildTableRowCell('${syslog.log_id}', 0),
+                  _buildTableRowCell(syslog.log_user, 1),
+                  _buildTableRowCell(_getEntityName(syslog.log_entity), 2),
+                  _buildTableRowCell(syslog.log_activity, 3),
+                  _buildTableRowCell(syslog.log_agent, 4),
+                  _buildTableRowCell(syslog.log_date.toDate().toString(), 5),
+                ])));
   }
 
   Widget _buildTableRowCell(String text, int type) {
     return SizedBox(
         width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: Text(text,
+        child: SelectableText(text,
             style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: DynamicSizeService.calculateAspectRatioSize(

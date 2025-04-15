@@ -15,12 +15,11 @@ class AdminSecondSection extends StatefulWidget {
 }
 
 class _AdminSecondSectionState extends State<AdminSecondSection> {
-  List<AuthModel> userDataFetch = [];
-  List<AuthModel> userDataDeployed = [];
+  List<AuthModel> userDataFetch = [], userDataDeployed = [];
+  bool isUserListLoaded = false, isHeaderClicked = false;
   String query = '';
-  bool isUserListLoaded = false;
   double sortBy = 0;
-  bool isHeaderClicked = false;
+
   @override
   void initState() {
     super.initState();
@@ -278,7 +277,7 @@ class _AdminSecondSectionState extends State<AdminSecondSection> {
       },
       child: SizedBox(
         width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: Text(
+        child: SelectableText(
           text,
           style: TextStyle(
             fontFamily: 'Montserrat',

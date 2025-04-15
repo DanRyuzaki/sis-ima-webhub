@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sis_project/models/authModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
+import 'package:sis_project/models/trafficLogModel.dart';
 import 'package:sis_project/services/global_state.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
@@ -18,45 +20,37 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
   final _InputUserController = TextEditingController();
   final _InputKeyController = TextEditingController();
   late AuthModel user;
-  List<AuthModel> userDataFetch = [];
-
+  late TrafficLogModel traffic;
   // Authenticate user and fetch data
   Future<void> userAuthenticate(
       BuildContext context, String inputUser, String inputKey) async {
     try {
-      // Sign in with FirebaseAuth
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: inputUser, password: inputKey);
 
-      // Get ID Token and store it in a cookie
       await _fetchUserData(userCredential.user!.email);
-
       useToastify.showLoadingToast(context, "Welcome ${user.firstName}!",
           "You're successfully logged in");
+      await _sisTrafficLog;
+
       web.window.open(
           './?session=true&page=${Provider.of<GlobalState>(context, listen: false).entityType}',
           '_self');
     } catch (e) {
-      // Authentication failed
       useToastify.showErrorToast(
           context, "Authentication Failed", "Invalid email or password.");
       print(e); //for debugging purpose
     }
   }
 
-  // Fetch user data from Firestore
   Future<void> _fetchUserData(String? userEmail) async {
     try {
-      // Query Firestore based on the email
-      CollectionReference entityCollection =
-          FirebaseFirestore.instance.collection("entity");
+      final entityCollection = FirebaseFirestore.instance.collection("entity");
 
-      // Fetch user data based on user email
       QuerySnapshot querySnapshot =
           await entityCollection.where("userMail", isEqualTo: userEmail).get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        // Process and store the data
         var doc = querySnapshot.docs.first;
         user = AuthModel(
           userID: doc.get("userID"),
@@ -77,12 +71,45 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
             user.userKey,
             user.userPhotoID,
             user.lastSession);
-      } else {}
+      }
     } catch (e) {
       print(e.toString());
       useToastify.showErrorToast(
           context, "Error", "Failed to fetch user data.");
       print(e); //for debugging purpose
+    }
+  }
+
+  Future<void> _sisTrafficLog() async {
+    try {
+      String formattedDate = DateFormat('MMMM d, y').format(DateTime.now());
+      final trafficCollection =
+          FirebaseFirestore.instance.collection("trafficlog");
+      QuerySnapshot tlQS = await trafficCollection
+          .where("timestamp", isEqualTo: formattedDate)
+          .get();
+      if (tlQS.docs.isEmpty) {
+        trafficCollection.add({
+          'timestamp': formattedDate,
+          'social-traffic': 1,
+          'sis-traffic': 1
+        });
+        print('tlQS.docs.isEmpty = true');
+      } else {
+        var doc = tlQS.docs.first;
+        traffic = TrafficLogModel(
+            sistraffic: doc.get('sis-traffic'),
+            socialtraffic: doc.get('social-traffic'),
+            timestamp: doc.get('timestamp'));
+        trafficCollection.doc(tlQS.docs.first.id).update({
+          'timestamp': formattedDate,
+          'social-traffic': traffic.sistraffic + 1,
+          'sis-traffic': traffic.socialtraffic + 1
+        });
+        print('tlQS.docs.isEmpty = false');
+      }
+    } catch (e) {
+      print(e);
     }
   }
 
@@ -105,7 +132,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Colors.black.withAlpha(51), // 0.2 opacity approx.
                 blurRadius: 8,
                 offset: Offset(2, 4),
               )
@@ -117,7 +144,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
               Text("Institutional Email:",
                   style: TextStyle(color: Colors.white, fontSize: 12)),
               SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _InputUserController,
                 style: TextStyle(fontSize: 12),
                 decoration: InputDecoration(
@@ -130,7 +157,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 ),
-                onSubmitted: (value) {
+                onFieldSubmitted: (value) {
                   userAuthenticate(context, _InputUserController.text,
                       _InputKeyController.text);
                 },
@@ -139,7 +166,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
               Text("Password:",
                   style: TextStyle(color: Colors.white, fontSize: 12)),
               SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _InputKeyController,
                 obscureText: true,
                 style: TextStyle(fontSize: 12, fontFamily: 'Monospace'),
@@ -153,7 +180,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 ),
-                onSubmitted: (value) {
+                onFieldSubmitted: (value) {
                   userAuthenticate(context, _InputUserController.text,
                       _InputKeyController.text);
                 },
