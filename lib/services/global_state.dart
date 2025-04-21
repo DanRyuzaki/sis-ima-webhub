@@ -16,22 +16,22 @@ class GlobalState with ChangeNotifier {
           id: '0',
           category: '1=main',
           name: 'address',
-          value: 'Congressional Road, Clamor Ave., Bagumbong Caloocan City'),
+          value: 'Please wait...'),
       _configCont = ConfigModel(
           id: '1',
           category: '1=main',
           name: 'contact',
-          value: 'Tel. Nos. 0282-444-264 Mobile No. 09189851295'),
+          value: 'Please wait...'),
       _configDept1 = ConfigModel(
           id: '2',
           category: '2=department',
           name: 'pre-school',
-          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[0]),
+          value: 'Please wait...'),
       _configDept2 = ConfigModel(
           id: '3',
           category: '2=department',
           name: 'elementary',
-          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[1]),
+          value: 'Please wait...'),
       _configDept3 = ConfigModel(
           id: '4',
           category: '2=department',
@@ -41,22 +41,19 @@ class GlobalState with ChangeNotifier {
           id: '5',
           category: '2=department',
           name: 'senior high school',
-          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[3]),
+          value: 'Please wait...'),
       _vmgo1 = ConfigModel(
           id: '6',
           category: '3=vmgo',
           name: 'mission',
-          value: WELCOME_INSTITUTION_INFO[3]),
+          value: 'Please wait...'),
       _vmgo2 = ConfigModel(
-          id: '7',
-          category: '3=vmgo',
-          name: 'vision',
-          value: WELCOME_INSTITUTION_INFO[4]),
+          id: '7', category: '3=vmgo', name: 'vision', value: 'Please wait...'),
       _vmgo3 = ConfigModel(
           id: '8',
           category: '3=vmgo',
           name: 'objectives',
-          value: WELCOME_INSTITUTION_INFO[5]);
+          value: 'Please wait...');
 
   ConfigModel get configAddr => _configAddr;
   ConfigModel get configCont => _configCont;

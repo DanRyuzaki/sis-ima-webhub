@@ -277,7 +277,7 @@ class _AdminSecondSectionState extends State<AdminSecondSection> {
       },
       child: SizedBox(
         width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: SelectableText(
+        child: Text(
           text,
           style: TextStyle(
             fontFamily: 'Montserrat',

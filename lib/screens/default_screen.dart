@@ -24,8 +24,8 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
   @override
   void initState() {
     super.initState();
+    fetchAndStoreConfigs(context);
     _initializeUser();
-   
   }
 
   Future<void> _initializeUser() async {
