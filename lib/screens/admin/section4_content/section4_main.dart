@@ -320,7 +320,7 @@ class _AdminFourthSectionState extends State<AdminFourthSection> {
       case 0:
         return "Admin";
       case 1:
-        return "Teacher";
+        return "Faculty";
       default:
         return "Student";
     }

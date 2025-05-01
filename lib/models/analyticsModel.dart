@@ -1,12 +1,12 @@
 class AnalyticsModel {
   int studentsEnrolled;
-  int educatorsEmployed;
+  int facultiesEmployed;
   int systemTraffic;
   int socialTraffic;
 
   AnalyticsModel({
     required this.studentsEnrolled,
-    required this.educatorsEmployed,
+    required this.facultiesEmployed,
     required this.systemTraffic,
     required this.socialTraffic,
   });

@@ -38,32 +38,9 @@ class _AdminScreenState extends State<AdminScreen> {
                       backgroundColor: Colors.white,
                       leading: Column(
                         children: [
-                          CircleAvatar(
-                            radius: DynamicSizeService.calculateAspectRatioSize(
-                                context, 0.03),
-                            child: Icon(HugeIcons.strokeRoundedUserCircle,
-                                size:
-                                    DynamicSizeService.calculateAspectRatioSize(
-                                        context, 0.04)),
-                          ),
-                          SizedBox(height: 8),
                           SizedBox(
                               width: DynamicSizeService.calculateWidthSize(
-                                  context, 0.095),
-                              child: Text(
-                                  textAlign: TextAlign.center,
-                                  "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
-                                  style: TextStyle(
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.0138),
-                                      fontWeight: FontWeight.bold),
-                                  softWrap: true)),
-                          Text('Admin',
-                              style: TextStyle(
-                                  fontSize: DynamicSizeService
-                                      .calculateAspectRatioSize(
-                                          context, 0.0125))),
+                                  context, 0.095)),
                           Divider(
                             height: 20,
                             thickness: 1,
@@ -151,7 +128,32 @@ class _AdminScreenState extends State<AdminScreen> {
                   height: DynamicSizeService.calculateAspectRatioSize(
                       context, 0.060),
                   width: DynamicSizeService.calculateAspectRatioSize(
-                      context, 0.060))
+                      context, 0.060)),
+              SizedBox(
+                  width: DynamicSizeService.calculateWidthSize(context, 0.040)),
+              SizedBox(
+                  height:
+                      DynamicSizeService.calculateWidthSize(context, 0.040)),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      textAlign: TextAlign.center,
+                      "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0168),
+                          fontWeight: FontWeight.bold),
+                      softWrap: true),
+                  Text('Admin',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0125))),
+                ],
+              )
             ])),
         backgroundColor: Color.fromARGB(255, 36, 66, 117),
         scrolledUnderElevation: 0.0,
@@ -164,7 +166,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 FirebaseAuth.instance.signOut();
                 web.window.open('./?session=false', '_self');
               },
-              child: Text("SIGN OUT", 
+              child: Text("SIGN OUT",
                   style: TextStyle(
                     fontSize: DynamicSizeService.calculateAspectRatioSize(
                         context, 0.016),

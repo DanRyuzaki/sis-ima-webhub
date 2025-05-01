@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sis_project/constants.dart';
 import 'package:sis_project/models/configModel.dart';
 
 class GlobalState with ChangeNotifier {
@@ -36,7 +35,7 @@ class GlobalState with ChangeNotifier {
           id: '4',
           category: '2=department',
           name: 'junior high school',
-          value: WELCOME_PROGRAM_OFFERINGS_DESCRIPTION[2]),
+          value: 'Please wait...'),
       _configDept4 = ConfigModel(
           id: '5',
           category: '2=department',

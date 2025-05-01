@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:sis_project/screens/student/section5_content/section5_main.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
@@ -34,32 +35,9 @@ class _StudentScreenState extends State<StudentScreen> {
                       backgroundColor: Colors.white,
                       leading: Column(
                         children: [
-                          CircleAvatar(
-                            radius: DynamicSizeService.calculateAspectRatioSize(
-                                context, 0.03),
-                            child: Icon(HugeIcons.strokeRoundedUserCircle,
-                                size:
-                                    DynamicSizeService.calculateAspectRatioSize(
-                                        context, 0.04)),
-                          ),
-                          SizedBox(height: 8),
                           SizedBox(
                               width: DynamicSizeService.calculateWidthSize(
-                                  context, 0.095),
-                              child: Text(
-                                  textAlign: TextAlign.center,
-                                  "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
-                                  style: TextStyle(
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.0138),
-                                      fontWeight: FontWeight.bold),
-                                  softWrap: true)),
-                          Text('Student',
-                              style: TextStyle(
-                                  fontSize: DynamicSizeService
-                                      .calculateAspectRatioSize(
-                                          context, 0.0125))),
+                                  context, 0.095)),
                           Divider(
                             height: 20,
                             thickness: 1,
@@ -115,13 +93,36 @@ class _StudentScreenState extends State<StudentScreen> {
                   height: DynamicSizeService.calculateAspectRatioSize(
                       context, 0.060),
                   width: DynamicSizeService.calculateAspectRatioSize(
-                      context, 0.060))
+                      context, 0.060)),
+              SizedBox(
+                  width: DynamicSizeService.calculateWidthSize(context, 0.025)),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      textAlign: TextAlign.center,
+                      "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0168),
+                          fontWeight: FontWeight.bold),
+                      softWrap: true),
+                  Text('Student',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0125))),
+                ],
+              )
             ])),
         backgroundColor: Color.fromARGB(255, 36, 66, 117),
         scrolledUnderElevation: 0.0,
         toolbarHeight: DynamicSizeService.calculateHeightSize(context, 0.11),
         actions: [
-          const SizedBox(width: 50),
+          SizedBox(
+              width: DynamicSizeService.calculateWidthSize(context, 0.045)),
           InkWell(
               onTap: () {
                 FirebaseAuth.instance.signOut();
@@ -150,7 +151,7 @@ class _StudentScreenState extends State<StudentScreen> {
         return const Text('View your enrolled subjects.');
 
       case 4:
-        return const Text('View student\'s calendar.');
+        return StudentFifthSection();
       default:
         return const Text('Error loading content.');
     }

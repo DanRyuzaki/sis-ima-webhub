@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:sis_project/models/analyticsModel.dart';
+import 'package:sis_project/models/facultyAnalyticsModel.dart';
 import 'package:sis_project/models/pubModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
-import 'package:sis_project/screens/admin/section1_content/section1_addpub.dart';
-import 'package:sis_project/screens/admin/section1_content/section1_viewpub.dart';
+import 'package:sis_project/screens/faculty/section1_content/section1_viewpub.dart';
 import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:sis_project/services/global_state.dart';
@@ -14,17 +13,17 @@ import 'package:intl/intl.dart';
 import 'package:animate_on_hover/animate_on_hover.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 
-class AdminFirstSection extends StatefulWidget {
-  const AdminFirstSection({super.key});
+class FacultyFirstSection extends StatefulWidget {
+  const FacultyFirstSection({super.key});
 
   @override
-  State<AdminFirstSection> createState() => _AdminFirstSectionState();
+  State<FacultyFirstSection> createState() => _FacultyFirstSectionState();
 }
 
-class _AdminFirstSectionState extends State<AdminFirstSection> {
+class _FacultyFirstSectionState extends State<FacultyFirstSection> {
   List<PubModel> PubDataFetch = [], PubDataDeployed = [];
   bool isPubListLoaded = false, isHeaderClicked = false;
-  late AnalyticsModel AnalyticsData;
+  late facultyAnalyticsModel facultyAnalyticsData;
   late Timestamp timeNow;
   late String query = '';
   late int socialTraffic, sisTraffic;
@@ -34,14 +33,11 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
   void initState() {
     super.initState();
     timeNow = Timestamp.fromDate(DateTime.now());
-    AnalyticsData = AnalyticsModel(
-      studentsEnrolled: 0,
-      facultiesEmployed: 0,
-      systemTraffic: 0,
-      socialTraffic: 0,
+    facultyAnalyticsData = facultyAnalyticsModel(
+      totalStudents: 0,
+      totalClasses: 0,
     );
-    _loadTrafficLogs();
-    _fetchAnalytics();
+    _fetchStudentsAnalytics();
     _fetchPubList();
   }
 
@@ -52,16 +48,27 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     return formattedDate;
   }
 
-  Future<void> _fetchAnalytics() async {
+  Future<void> _fetchStudentsAnalytics() async {
     try {
       final entityCollection = FirebaseFirestore.instance.collection("entity");
-      final studentsTotalQS =
-          await entityCollection.where('entity', isEqualTo: 2).get();
-      final facultiesTotalQS =
-          await entityCollection.where('entity', isEqualTo: 1).get();
+      final userID = Provider.of<GlobalState>(context, listen: false).userID;
+
+      final entityDoc = await _getEntityDocument(entityCollection, userID);
+      if (entityDoc == null) {
+        print('No data found for the given userID.');
+        return;
+      }
+
+      final Map<String, String> subjectToDepartmentMap =
+          await _getSubjectDepartmentMap(entityDoc);
+
+      final analytics = await _computeAnalytics(subjectToDepartmentMap);
+
       setState(() {
-        AnalyticsData.studentsEnrolled = studentsTotalQS.size;
-        AnalyticsData.facultiesEmployed = facultiesTotalQS.size;
+        facultyAnalyticsData = facultyAnalyticsModel(
+          totalStudents: analytics['totalStudents']!,
+          totalClasses: analytics['totalClasses']!,
+        );
       });
 
       useToastify.showLoadingToast(
@@ -72,47 +79,74 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     }
   }
 
-  Future<void> _loadTrafficLogs() async {
-    int social = await _fetchTrafficLog('social');
-    int sis = await _fetchTrafficLog('sis');
+  Future<Map<String, dynamic>?> _getEntityDocument(
+      CollectionReference entityCollection, String userID) async {
+    final analyticsQS =
+        await entityCollection.where('userID', isEqualTo: userID).get();
 
-    setState(() {
-      socialTraffic = social;
-      sisTraffic = sis;
-      AnalyticsData.systemTraffic = sis;
-      AnalyticsData.socialTraffic = social;
-    });
+    if (analyticsQS.docs.isNotEmpty) {
+      return analyticsQS.docs.first.data() as Map<String, dynamic>;
+    }
+    return null;
   }
 
-  Future<int> _fetchTrafficLog(String type) async {
-    try {
-      String formattedDate = DateFormat('MMMM d, y').format(DateTime.now());
-      CollectionReference trafficCollection =
-          FirebaseFirestore.instance.collection("trafficlog");
+  Future<Map<String, String>> _getSubjectDepartmentMap(
+      Map<String, dynamic> docData) async {
+    final String advisoryClassId = docData['advisoryClassId'] ?? '';
+    final List<dynamic> subjectsListDynamic = docData['subjectsList'] ?? [];
+    final List<String> subjectsList = List<String>.from(subjectsListDynamic)
+      ..add(advisoryClassId);
 
-      QuerySnapshot querySnapshot = await trafficCollection
-          .where("timestamp", isEqualTo: formattedDate)
+    final Map<String, String> subjectToDepartmentMap = {};
+    for (String classSubjectCode in subjectsList) {
+      final department = await _fetchClassDepartment(classSubjectCode);
+      subjectToDepartmentMap[classSubjectCode] = department;
+    }
+
+    return subjectToDepartmentMap;
+  }
+
+  Future<Map<String, int>> _computeAnalytics(
+      Map<String, String> subjectToDepartmentMap) async {
+    int totalStudents = 0;
+    int totalClasses = subjectToDepartmentMap.length;
+
+    for (final entry in subjectToDepartmentMap.entries) {
+      final subjectCode = entry.key;
+      final department = entry.value;
+
+      final deptCollection = FirebaseFirestore.instance.collection(department);
+      final deptQS = await deptCollection
+          .where('class-code', isEqualTo: subjectCode.split(':')[0])
           .get();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        var docData = querySnapshot.docs.first.data() as Map<String, dynamic>;
-        int sis = docData['sis-traffic'] ?? 0;
-        int social = docData['social-traffic'] ?? 0;
-
-        if (type == 'sis') {
-          return sis;
-        } else if (type == 'social') {
-          return social;
-        } else {
-          return 0;
-        }
-      } else {
-        return 0;
+      if (deptQS.docs.isNotEmpty) {
+        final classList =
+            List<String>.from(deptQS.docs.first.data()['class-list'] ?? []);
+        totalStudents += classList.length;
       }
-    } catch (e) {
-      print('Error fetching traffic log: $e');
-      return 0;
     }
+
+    return {
+      'totalStudents': totalStudents,
+      'totalClasses': totalClasses,
+    };
+  }
+
+  Future<String> _fetchClassDepartment(String classSubjectCode) async {
+    final classSubjectsCollection =
+        FirebaseFirestore.instance.collection("class-subjects");
+
+    final classSubjectsQS = await classSubjectsCollection
+        .where('classSubjectCode', isEqualTo: classSubjectCode)
+        .get();
+
+    if (classSubjectsQS.docs.isNotEmpty) {
+      final docData = classSubjectsQS.docs.first.data();
+      return docData['subjectDepartment'] ?? 'Unknown Department';
+    }
+
+    return 'Unknown Department';
   }
 
   Future<void> _fetchPubList() async {
@@ -140,6 +174,27 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     } catch (e) {
       useToastify.showErrorToast(context, "Error", "Failed to fetch articles.");
       print(e);
+    }
+  }
+
+  Future<void> _pubViewLog(int pub_id) async {
+    try {
+      CollectionReference trafficCollection =
+          FirebaseFirestore.instance.collection("publication");
+
+      QuerySnapshot querySnapshot =
+          await trafficCollection.where("pub_id", isEqualTo: pub_id).get();
+
+      var docSnapshot = querySnapshot.docs.first;
+      var docData = docSnapshot.data() as Map<String, dynamic>;
+      int currentReactValue = docData['pub_views'] ?? 0;
+      await docSnapshot.reference.set({
+        'pub_views': currentReactValue + 1,
+      }, SetOptions(merge: true));
+
+      print('views data updated for publication no. $pub_id');
+    } catch (e) {
+      print('Error updating views count: $e');
     }
   }
 
@@ -187,20 +242,6 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Color.fromARGB(255, 36, 66, 117),
-        child:
-            HugeIcon(icon: HugeIcons.strokeRoundedAdd01, color: Colors.white),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AddPubDialog(
-              onRefresh: _refreshUserList,
-              PubDataDeployed: PubDataDeployed,
-            ),
-          );
-        },
-      ),
       backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _refreshUserList,
@@ -234,7 +275,7 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                               context, 0.013)))
                 ]),
                 Text(
-                    'Welcome back, Admin ${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}!',
+                    'Welcome back, Faculty ${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}!',
                     style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: DynamicSizeService.calculateAspectRatioSize(
@@ -242,43 +283,24 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                 SizedBox(
                     height:
                         DynamicSizeService.calculateHeightSize(context, 0.08)),
-                WidgetSectionHeader(title: 'System Analytics'),
+                WidgetSectionHeader(title: 'Educator Analytics'),
                 SizedBox(
                     height:
                         DynamicSizeService.calculateHeightSize(context, 0.05)),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedBackpack01,
-                          AnalyticsData.studentsEnrolled,
-                          'STUDENTS ENROLLED',
-                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
-                          context),
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedSchoolTie,
-                          AnalyticsData.facultiesEmployed,
-                          'FACULTIES EMPLOYED',
-                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
-                          context),
-                    ]),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedAnalytics03,
-                          AnalyticsData.systemTraffic,
-                          'SIS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}region',
-                          context),
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedTrafficJam02,
-                          AnalyticsData.socialTraffic,
-                          'SOCIALS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}cregion',
-                          context)
-                    ])
-                  ],
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  _buildAnalyticsCard(
+                      HugeIcons.strokeRoundedChild,
+                      facultyAnalyticsData.totalStudents,
+                      'TOTAL STUDENTS',
+                      'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE")}',
+                      context),
+                  _buildAnalyticsCard(
+                      HugeIcons.strokeRoundedBook02,
+                      facultyAnalyticsData.totalClasses,
+                      'TOTAL CLASSES',
+                      'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE")}',
+                      context),
+                ]),
                 SizedBox(
                     height:
                         DynamicSizeService.calculateHeightSize(context, 0.1)),
@@ -410,8 +432,6 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
                 isHeaderClicked = false;
                 break;
             }
-
-          // 👇 ADD THIS
           PubDataDeployed = _filterUsers(query);
         });
       },
@@ -438,6 +458,10 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
             builder: (context) =>
                 ViewPubDialog(onRefresh: _refreshUserList, pubModel: pub),
           );
+          _pubViewLog(pub.pub_id);
+          setState(() {
+            PubDataDeployed = _filterUsers(query);
+          });
         },
         onDoubleTap: () {},
         child: Card(

@@ -150,7 +150,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
   Widget _buildDropdown() {
     return DropdownButtonFormField<String>(
       value: _entityType,
-      items: ['Admin', 'Teacher', 'Student']
+      items: ['Admin', 'Faculty', 'Student']
           .map((type) => DropdownMenuItem<String>(
                 value: type,
                 child: Text(type,
@@ -231,28 +231,28 @@ class _AddUserDialogState extends State<AddUserDialog> {
         print('User Key: $userKey');
         print('Entity Type: $_entityType');
 
-          FirebaseApp tempApp = await Firebase.initializeApp(
-            name: 'TemporaryApp',
-            options: Firebase.app().options,
-          );
+        FirebaseApp tempApp = await Firebase.initializeApp(
+          name: 'TemporaryApp',
+          options: Firebase.app().options,
+        );
 
-          try {
-            await FirebaseAuth.instanceFor(app: tempApp)
-                .createUserWithEmailAndPassword(email: email, password: userKey);
-            entityCollection.add({
-              'userID': userId,
-              'userName00': firstName,
-              'userName01': lastName,
-              'entity': _getEntityValue(_entityType),
-              'userMail': email,
-              'userKey': userKey,
-              'userPhotoID': 'default',
-              'lastSession': Timestamp.fromDate(DateTime.now())
-            });
-          } catch (e) {
-          } finally {
-            await tempApp.delete();
-          }
+        try {
+          await FirebaseAuth.instanceFor(app: tempApp)
+              .createUserWithEmailAndPassword(email: email, password: userKey);
+          entityCollection.add({
+            'userID': userId,
+            'userName00': firstName,
+            'userName01': lastName,
+            'entity': _getEntityValue(_entityType),
+            'userMail': email,
+            'userKey': userKey,
+            'userPhotoID': 'default',
+            'lastSession': Timestamp.fromDate(DateTime.now())
+          });
+        } catch (e) {
+        } finally {
+          await tempApp.delete();
+        }
 
         Navigator.of(context).pop();
         onRefresh();
@@ -271,7 +271,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
     switch (entityType) {
       case 'Admin':
         return 0;
-      case 'Teacher':
+      case 'Faculty':
         return 1;
       default:
         return 2;

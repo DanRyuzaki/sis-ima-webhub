@@ -53,7 +53,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
     _userKeyController.text = user.userKey;
     _entityType = user.entityType == 0
         ? 'Admin'
-        : (user.entityType == 1 ? 'Teacher' : 'Student');
+        : (user.entityType == 1 ? 'Faculty' : 'Student');
     _delUser = false;
   }
 
@@ -246,7 +246,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
   Widget _buildDropdown() {
     return DropdownButtonFormField<String>(
       value: _entityType,
-      items: ['Admin', 'Teacher', 'Student']
+      items: ['Admin', 'Faculty', 'Student']
           .map((type) => DropdownMenuItem<String>(
                 value: type,
                 child: Text(type,
@@ -372,7 +372,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
     switch (entityType) {
       case 'Admin':
         return 0;
-      case 'Teacher':
+      case 'Faculty':
         return 1;
       default:
         return 2;

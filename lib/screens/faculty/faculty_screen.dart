@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:sis_project/screens/faculty/section1_content/section1_main.dart';
+import 'package:sis_project/screens/faculty/section5_content/section5_main.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:web/web.dart' as web;
 import 'package:provider/provider.dart';
@@ -33,32 +35,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       backgroundColor: Colors.white,
                       leading: Column(
                         children: [
-                          CircleAvatar(
-                            radius: DynamicSizeService.calculateAspectRatioSize(
-                                context, 0.03),
-                            child: Icon(HugeIcons.strokeRoundedUserCircle,
-                                size:
-                                    DynamicSizeService.calculateAspectRatioSize(
-                                        context, 0.04)),
-                          ),
-                          SizedBox(height: 8),
                           SizedBox(
                               width: DynamicSizeService.calculateWidthSize(
-                                  context, 0.095),
-                              child: Text(
-                                  textAlign: TextAlign.center,
-                                  "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
-                                  style: TextStyle(
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.0138),
-                                      fontWeight: FontWeight.bold),
-                                  softWrap: true)),
-                          Text('Teacher',
-                              style: TextStyle(
-                                  fontSize: DynamicSizeService
-                                      .calculateAspectRatioSize(
-                                          context, 0.0125))),
+                                  context, 0.095)),
                           Divider(
                             height: 20,
                             thickness: 1,
@@ -84,10 +63,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                         NavigationRailDestination(
                           icon: Icon(HugeIcons.strokeRoundedAccountSetting02),
                           label: Text('Classes'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(HugeIcons.strokeRoundedCourse),
-                          label: Text('Subjects'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(HugeIcons.strokeRoundedStudentCard),
@@ -118,13 +93,36 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   height: DynamicSizeService.calculateAspectRatioSize(
                       context, 0.060),
                   width: DynamicSizeService.calculateAspectRatioSize(
-                      context, 0.060))
+                      context, 0.060)),
+              SizedBox(
+                  width: DynamicSizeService.calculateWidthSize(context, 0.025)),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      textAlign: TextAlign.center,
+                      "${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0168),
+                          fontWeight: FontWeight.bold),
+                      softWrap: true),
+                  Text('Faculty',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: DynamicSizeService.calculateAspectRatioSize(
+                              context, 0.0125))),
+                ],
+              )
             ])),
         backgroundColor: Color.fromARGB(255, 36, 66, 117),
         scrolledUnderElevation: 0.0,
         toolbarHeight: DynamicSizeService.calculateHeightSize(context, 0.11),
         actions: [
-          const SizedBox(width: 50),
+          SizedBox(
+              width: DynamicSizeService.calculateWidthSize(context, 0.045)),
           InkWell(
               onTap: () {
                 FirebaseAuth.instance.signOut();
@@ -144,17 +142,15 @@ class _TeacherScreenState extends State<TeacherScreen> {
   Widget _buildContent(int index) {
     switch (index) {
       case 0:
-        return const Text('Teacher home content.');
+        return FacultyFirstSection();
       case 1:
         return const Text('View and edit your classes.');
       case 2:
-        return const Text('View and edit your subjects.');
-      case 3:
         return const Text('View your and edit your students.');
-      case 4:
+      case 3:
         return const Text('View your and edit student\'s grades.');
-      case 5:
-        return const Text('View teacher\'s calendar.');
+      case 4:
+        return FacultyFifthSection();
       default:
         return const Text('Error loading content.');
     }

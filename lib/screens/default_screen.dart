@@ -7,7 +7,7 @@ import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/models/configModel.dart';
 import 'package:sis_project/screens/admin/admin_screen.dart';
 import 'package:sis_project/screens/student/student_screen.dart';
-import 'package:sis_project/screens/teacher/teacher_screen.dart';
+import 'package:sis_project/screens/faculty/faculty_screen.dart';
 import 'package:sis_project/screens/welcome/welcome_screen.dart';
 import 'package:sis_project/services/global_state.dart';
 

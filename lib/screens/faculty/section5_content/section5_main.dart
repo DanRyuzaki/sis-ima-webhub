@@ -2,24 +2,21 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/models/eventModel.dart';
-import 'package:sis_project/screens/admin/section3_content/section3_addevent.dart';
-import 'package:sis_project/screens/admin/section3_content/section3_delevent.dart';
 import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-class AdminThirdSection extends StatefulWidget {
-  const AdminThirdSection({super.key});
+class FacultyFifthSection extends StatefulWidget {
+  const FacultyFifthSection({super.key});
 
   @override
-  State<AdminThirdSection> createState() => _ManageCalendarState();
+  State<FacultyFifthSection> createState() => _ManageCalendarState();
 }
 
-class _ManageCalendarState extends State<AdminThirdSection> {
+class _ManageCalendarState extends State<FacultyFifthSection> {
   late ScrollController _scrollController;
   List<EventModel> EventDataFetch = [], EventDataDeployed = [];
   bool isEventListLoaded = false, isHeaderClicked = false;
@@ -169,23 +166,6 @@ class _ManageCalendarState extends State<AdminThirdSection> {
               ...eventsForDay.map((event) {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
-                  trailing: IconButton(
-                    icon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedDelete01,
-                        size: 30,
-                        color: const Color.fromARGB(255, 59, 59, 59)),
-                    onPressed: () {
-                      Navigator.pop(context);
-
-                      showDialog(
-                        context: context,
-                        builder: (context) => DeleteEventDialog(
-                          onRefresh: _refreshEventList,
-                          event_id: event.event_id,
-                        ),
-                      );
-                    },
-                  ),
                   title: Text(
                     event.event_title,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -219,16 +199,6 @@ class _ManageCalendarState extends State<AdminThirdSection> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color.fromARGB(255, 36, 66, 117),
-          child:
-              HugeIcon(icon: HugeIcons.strokeRoundedAdd01, color: Colors.white),
-          onPressed: () => showDialog(
-                context: context,
-                builder: (context) => AddEventDialog(
-                    onRefresh: _refreshEventList,
-                    EventDataDeployed: EventDataDeployed),
-              )),
       backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _refreshEventList,
@@ -253,8 +223,7 @@ class _ManageCalendarState extends State<AdminThirdSection> {
                       fontWeight: FontWeight.bold,
                       color: const Color.fromARGB(200, 0, 0, 0),
                     )),
-                Text(
-                    'View and manage the calendar of events for your institution.',
+                Text('View the calendar of events for your institution.',
                     style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: DynamicSizeService.calculateAspectRatioSize(

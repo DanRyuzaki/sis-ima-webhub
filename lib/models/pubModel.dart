@@ -6,13 +6,11 @@ class PubModel {
   final String pub_content;
   final Timestamp pub_date;
   final int pub_views;
-  final int pub_reacts;
 
   PubModel(
       {required this.pub_id,
       required this.pub_title,
       required this.pub_content,
       required this.pub_date,
-      required this.pub_views,
-      required this.pub_reacts});
+      required this.pub_views});
 }

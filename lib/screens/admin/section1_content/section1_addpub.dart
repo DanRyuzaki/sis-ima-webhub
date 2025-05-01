@@ -129,12 +129,14 @@ class _AddPubDialogState extends State<AddPubDialog> {
     if (_formKey.currentState!.validate()) {
       CollectionReference pubCollection =
           FirebaseFirestore.instance.collection("publication");
-
-      QuerySnapshot pubQS = await pubCollection.get();
-
       String pubTitle = _pubTitleController.text.trim();
       String pubContent = _pubContentController.text.trim();
-      int pubID = pubQS.size + 1;
+      final highestValueQS = await FirebaseFirestore.instance
+          .collection('publication')
+          .orderBy('pub_id', descending: true)
+          .limit(1)
+          .get();
+      int pubID = highestValueQS.docs.first.get('pub_id') + 1;
       try {
         print('Form submitted');
         print('Pub ID: $pubID');
@@ -147,7 +149,6 @@ class _AddPubDialogState extends State<AddPubDialog> {
           'pub_title': pubTitle,
           'pub_content': pubContent,
           'pub_date': Timestamp.fromDate(DateTime.now()),
-          'pub_reacts': 0,
           'pub_views': 0,
         });
 

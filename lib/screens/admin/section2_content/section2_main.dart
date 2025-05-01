@@ -324,7 +324,8 @@ class _AdminSecondSectionState extends State<AdminSecondSection> {
                           "${user.firstName} ${user.lastName}", 1),
                       _buildTableRowCell(_getEntityName(user.entityType), 2),
                       _buildTableRowCell(user.userMail, 3),
-                      _buildTableRowCell(user.userKey, 4),
+                      _buildTableRowCell(
+                          user.userKey.replaceAll(RegExp(r'.'), '*'), 4),
                       _buildTableRowCell(
                           user.lastSession.toDate().toString(), 5),
                     ]))));
@@ -345,7 +346,7 @@ class _AdminSecondSectionState extends State<AdminSecondSection> {
       case 0:
         return "Admin";
       case 1:
-        return "Teacher";
+        return "Faculty";
       default:
         return "Student";
     }

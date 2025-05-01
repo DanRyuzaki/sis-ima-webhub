@@ -37,8 +37,8 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
           './?session=true&page=${Provider.of<GlobalState>(context, listen: false).entityType}',
           '_self');
     } catch (e) {
-      useToastify.showErrorToast(
-          context, "Authentication Failed", "Invalid email or password.");
+      useToastify.showErrorToast(context, "Authentication Failed",
+          "Failed connection, invalid email or password.");
       print(e); //for debugging purpose
     }
   }
