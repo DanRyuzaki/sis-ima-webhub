@@ -125,7 +125,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
     } catch (e) {
       print('Database Error: $e');
       useToastify.showErrorToast(context, 'Password Reminder',
-          'System error occurred. Please try again later.');
+          'System error occurred. Please try again later or contact the administrator.');
     }
   }
 
