@@ -51,6 +51,8 @@ dependencies:
   web_browser_detect: ^2.1.0
   animated_flip_counter: ^0.3.4
   table_calendar: ^3.2.0
+  emailjs: ^4.0.0
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +73,7 @@ flutter:
   assets:
     - assets/SVGs/VectorizedLogo_IMA.svg
     - assets/JPGs/IMABackgroundPhoto.jpg
+    - assets/.env
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

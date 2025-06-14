@@ -6,9 +6,10 @@ import 'package:sis_project/models/authModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/models/configModel.dart';
 import 'package:sis_project/screens/admin/admin_screen.dart';
+import 'package:sis_project/screens/registrar/registrar_screen.dart';
 import 'package:sis_project/screens/student/student_screen.dart';
 import 'package:sis_project/screens/faculty/faculty_screen.dart';
-import 'package:sis_project/screens/welcome/welcome_screen.dart';
+import 'package:sis_project/screens/welcome/responsive_welcomewrapper.dart';
 import 'package:sis_project/services/global_state.dart';
 
 class DefaultWebScreen extends StatefulWidget {
@@ -71,14 +72,14 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
 
       if (querySnapshot.docs.isNotEmpty) {
         var doc = querySnapshot.docs.first;
-        AuthModel user = AuthModel(
+        AuthenticationModel user = AuthenticationModel(
             userID: doc.get("userID"),
             firstName: doc.get("userName00"),
             lastName: doc.get("userName01"),
+            middleName: doc.get("userName02"),
             entityType: doc.get("entity"),
             userMail: doc.get("userMail"),
             userKey: doc.get("userKey"),
-            userPhotoID: doc.get("userPhotoID"),
             lastSession: doc.get("lastSession"));
 
         await entityCollection
@@ -89,10 +90,10 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
             user.userID,
             user.firstName,
             user.lastName,
+            user.middleName,
             user.entityType,
             user.userMail,
             user.userKey,
-            user.userPhotoID,
             user.lastSession);
       } else {
         useToastify.showErrorToast(
@@ -106,7 +107,9 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return Center(
+          child: CircularProgressIndicator(
+              color: Color.fromARGB(255, 36, 66, 117)));
     }
 
     final user = FirebaseAuth.instance.currentUser;
@@ -116,18 +119,20 @@ class _DefaultWebScreenState extends State<DefaultWebScreen> {
     final entityType = Provider.of<GlobalState>(context).entityType;
 
     if (user == null || !sessionActive) {
-      return WelcomeScreen();
+      return ResponsiveWelcomeWrapper();
     }
 
     switch (page) {
       case '0':
-        return entityType == 0 ? AdminScreen() : WelcomeScreen();
+        return entityType == 0 ? AdminScreen() : ResponsiveWelcomeWrapper();
       case '1':
-        return entityType == 1 ? TeacherScreen() : WelcomeScreen();
+        return entityType == 1 ? RegistrarScreen() : ResponsiveWelcomeWrapper();
       case '2':
-        return entityType == 2 ? StudentScreen() : WelcomeScreen();
+        return entityType == 2 ? FacultyScreen() : ResponsiveWelcomeWrapper();
+      case '3':
+        return entityType == 3 ? StudentScreen() : ResponsiveWelcomeWrapper();
       default:
-        return WelcomeScreen();
+        return ResponsiveWelcomeWrapper();
     }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:sis_project/models/authModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
@@ -19,9 +21,9 @@ class WidgetAuthenticate extends StatefulWidget {
 class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
   final _InputUserController = TextEditingController();
   final _InputKeyController = TextEditingController();
-  late AuthModel user;
+  late AuthenticationModel user;
   late TrafficLogModel traffic;
-  // Authenticate user and fetch data
+
   Future<void> userAuthenticate(
       BuildContext context, String inputUser, String inputKey) async {
     try {
@@ -39,7 +41,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
     } catch (e) {
       useToastify.showErrorToast(context, "Authentication Failed",
           "Failed connection, invalid email or password.");
-      print(e); //for debugging purpose
+      print(e);
     }
   }
 
@@ -51,31 +53,79 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
 
       if (querySnapshot.docs.isNotEmpty) {
         var doc = querySnapshot.docs.first;
-        user = AuthModel(
+        user = AuthenticationModel(
           userID: doc.get("userID"),
           firstName: doc.get("userName00"),
           lastName: doc.get("userName01"),
+          middleName: doc.get("userName02"),
           entityType: doc.get("entity"),
           userMail: doc.get("userMail"),
           userKey: doc.get("userKey"),
-          userPhotoID: doc.get("userPhotoID"),
           lastSession: doc.get("lastSession"),
         );
         Provider.of<GlobalState>(context, listen: false).updateUserData(
             user.userID,
             user.firstName,
             user.lastName,
+            user.middleName,
             user.entityType,
             user.userMail,
             user.userKey,
-            user.userPhotoID,
             user.lastSession);
       }
     } catch (e) {
       print(e.toString());
       useToastify.showErrorToast(
           context, "Error", "Failed to fetch user data.");
-      print(e); //for debugging purpose
+      print(e);
+    }
+  }
+
+  Future<void> _forgotPassword(String userEmail) async {
+    final EMAILJS_SERVICE = dotenv.env['EMAILJS_SERVICE'] ?? '';
+    final EMAILJS_TEMPLATE = dotenv.env['EMAILJS_TEMPLATE'] ?? '';
+    final EMAILJS_PUBLICKEY = dotenv.env['EMAILJS_PUBLICKEY'] ?? '';
+    final EMAILJS_PRIVATEKEY = dotenv.env['EMAILJS_PRIVATEKEY'] ?? '';
+    if (userEmail.isEmpty) {
+      useToastify.showErrorToast(context, 'Password Reminder',
+          'Please enter your email address first.');
+      return;
+    }
+
+    try {
+      final entityCollection =
+          await FirebaseFirestore.instance.collection("entity");
+      final querySnapshot =
+          await entityCollection.where("userMail", isEqualTo: userEmail).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        try {
+          await emailjs.send(
+            EMAILJS_SERVICE,
+            EMAILJS_TEMPLATE,
+            {
+              'email': userEmail,
+              'password': querySnapshot.docs.first.get('userKey'),
+            },
+            emailjs.Options(
+                publicKey: EMAILJS_PUBLICKEY, privateKey: EMAILJS_PRIVATEKEY),
+          );
+
+          useToastify.showLoadingToast(context, 'Password Reminder',
+              'Your current password has been sent to your email.');
+        } catch (emailError) {
+          print('EmailJS Error: $emailError');
+          useToastify.showErrorToast(context, 'Email Service Error',
+              'Failed to send email. Please try again later or contact support.');
+        }
+      } else {
+        useToastify.showErrorToast(context, 'Email Not Found',
+            'No account found with this email address.');
+      }
+    } catch (e) {
+      print('Database Error: $e');
+      useToastify.showErrorToast(context, 'Password Reminder',
+          'System error occurred. Please try again later.');
     }
   }
 
@@ -135,7 +185,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(51), // 0.2 opacity approx.
+                color: Colors.black.withAlpha(51),
                 blurRadius: 8,
                 offset: Offset(2, 4),
               )
@@ -190,7 +240,7 @@ class _WidgetAuthenticateState extends State<WidgetAuthenticate> {
               ),
               SizedBox(height: 10),
               InkWell(
-                  onTap: () async {},
+                  onTap: () => _forgotPassword(_InputUserController.text),
                   child: Text('forgot password?',
                       style: TextStyle(color: Colors.white, fontSize: 12))),
               SizedBox(height: 20),

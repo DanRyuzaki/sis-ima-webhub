@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AuthModel {
+class AuthenticationModel {
   final String userID;
   final String firstName;
   final String lastName;
+  final String middleName;
   final double entityType;
   final String userMail;
   final String userKey;
-  final String userPhotoID;
   final Timestamp lastSession;
 
-  AuthModel(
+  AuthenticationModel(
       {required this.userID,
       required this.firstName,
       required this.lastName,
+      required this.middleName,
       required this.entityType,
       required this.userMail,
       required this.userKey,
-      required this.userPhotoID,
       required this.lastSession});
 }

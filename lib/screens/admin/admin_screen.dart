@@ -190,7 +190,9 @@ class _AdminScreenState extends State<AdminScreen> {
       case 4:
         return AdminFifthSection();
       default:
-        return const Text('Error loading content.');
+        return Center(
+            child: CircularProgressIndicator(
+                color: Color.fromARGB(255, 36, 66, 117)));
     }
   }
 }

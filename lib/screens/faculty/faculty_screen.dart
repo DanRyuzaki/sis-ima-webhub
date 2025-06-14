@@ -3,22 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:sis_project/screens/faculty/section1_content/section1_main.dart';
+import 'package:sis_project/screens/faculty/section2_content/section2_main.dart';
+import 'package:sis_project/screens/faculty/section3_content/section3_main.dart';
+import 'package:sis_project/screens/faculty/section4_content/section4_main.dart';
 import 'package:sis_project/screens/faculty/section5_content/section5_main.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:web/web.dart' as web;
 import 'package:provider/provider.dart';
 import 'package:sis_project/services/global_state.dart';
 
-class TeacherScreen extends StatefulWidget {
-  const TeacherScreen({super.key});
+class FacultyScreen extends StatefulWidget {
+  const FacultyScreen({super.key});
 
   @override
-  State<TeacherScreen> createState() => _TeacherScreenState();
+  State<FacultyScreen> createState() => _FacultyScreenState();
 }
 
-class _TeacherScreenState extends State<TeacherScreen> {
+class _FacultyScreenState extends State<FacultyScreen> {
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    final queryIndex = Uri.base.queryParameters['assessment'] ?? '';
+    if (queryIndex == 'true')
+      _selectedIndex = 3;
+    else
+      _selectedIndex = _selectedIndex;
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +80,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                         ),
                         NavigationRailDestination(
                           icon: Icon(HugeIcons.strokeRoundedStudentCard),
-                          label: Text('Students'),
+                          label: Text('Advisory'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(HugeIcons.strokeRoundedSchoolReportCard),
@@ -140,19 +154,24 @@ class _TeacherScreenState extends State<TeacherScreen> {
   }
 
   Widget _buildContent(int index) {
+    final queryParams = Uri.base.queryParameters;
+    final sessionUser = int.parse(queryParams['page'].toString());
+
     switch (index) {
       case 0:
         return FacultyFirstSection();
       case 1:
-        return const Text('View and edit your classes.');
+        return FacultySecondSection();
       case 2:
-        return const Text('View your and edit your students.');
+        return FacultyThirdSection();
       case 3:
-        return const Text('View your and edit student\'s grades.');
+        return FacultyFourthSection();
       case 4:
-        return FacultyFifthSection();
+        return FacultyFifthSection(userType: sessionUser);
       default:
-        return const Text('Error loading content.');
+        return Center(
+            child: CircularProgressIndicator(
+                color: Color.fromARGB(255, 36, 66, 117)));
     }
   }
 }

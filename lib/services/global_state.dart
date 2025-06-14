@@ -159,37 +159,37 @@ class GlobalState with ChangeNotifier {
   String _userID = '';
   String _userName00 = '';
   String _userName01 = '';
+  String _userName02 = '';
   double _entityType = 0;
   String _userMail = '';
   String _userKey = '';
-  String _userPhotoID = '';
   Timestamp _lastSession = Timestamp.fromDate(DateTime.now());
 
   String get userID => _userID;
   String get userName00 => _userName00;
   String get userName01 => _userName01;
+  String get userName02 => _userName02;
   double get entityType => _entityType;
   String get userMail => _userMail;
   String get userKey => _userKey;
-  String get userPhotoID => _userPhotoID;
   Timestamp get lastSession => _lastSession;
 
   void updateUserData(
       String userID,
       String userName00,
       String userName01,
+      String userName02,
       double entityType,
       String userMail,
       String userKey,
-      String userPhotoID,
       Timestamp lastSession) {
     _userID = userID;
     _userName00 = userName00;
     _userName01 = userName01;
+    _userName02 = userName02;
     _entityType = entityType;
     _userMail = userMail;
     _userKey = userKey;
-    _userPhotoID = userPhotoID;
     _lastSession = lastSession;
     notifyListeners();
   }

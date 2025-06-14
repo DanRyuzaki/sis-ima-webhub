@@ -34,6 +34,11 @@ migrate_working_dir/
 /build/
 /web/
 
+# Environment files
+assets/.env
+assets/.env.local
+assets/.env.*.local
+
 # Symbolication related
 app.*.symbols
 

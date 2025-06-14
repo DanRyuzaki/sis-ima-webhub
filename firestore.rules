@@ -1,0 +1,58 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /entity/{document=**} {
+      allow read, write: if true;
+    }
+ 		match /publication/{document=**} {
+      allow read, write: if true;
+    }
+  	match /sysactivity/{document=**} {
+      allow read, write: if true;
+    }
+    match /config/{document=**} {
+      allow read, write: if true;
+    }
+    match /trafficlog/{document=**} {
+      allow read, write: if true;
+    }
+    match /events/{document=**} {
+      allow read, write: if true;
+    }
+  	match /pre-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /pri-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /jhs-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /abm-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /humms-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /gas-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+		match /ict-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /he-dept/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /class-subjects/{document=**} {
+  	  allow read, write: if true;
+    }
+    match /profile-information/{document=**} {
+    	allow read, write: if true;
+    }
+    match /subjects/{document=**} {
+  		allow read, write: if true;
+    } 
+  }
+}

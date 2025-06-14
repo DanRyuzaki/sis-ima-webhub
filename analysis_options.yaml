@@ -10,6 +10,7 @@
 analyzer:
   errors:
     avoid_web_libraries_in_flutter: ignore
+    deprecated_member_use: ignore
 i ignorenclude: package:flutter_lints/flutter.yaml
 
 linter:

@@ -5,13 +5,13 @@ import 'package:sis_project/models/facultyAnalyticsModel.dart';
 import 'package:sis_project/models/pubModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/screens/faculty/section1_content/section1_viewpub.dart';
-import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:sis_project/services/global_state.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_on_hover/animate_on_hover.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class FacultyFirstSection extends StatefulWidget {
   const FacultyFirstSection({super.key});
@@ -21,19 +21,29 @@ class FacultyFirstSection extends StatefulWidget {
 }
 
 class _FacultyFirstSectionState extends State<FacultyFirstSection> {
-  List<PubModel> PubDataFetch = [], PubDataDeployed = [];
-  bool isPubListLoaded = false, isHeaderClicked = false;
-  late facultyAnalyticsModel facultyAnalyticsData;
-  late Timestamp timeNow;
-  late String query = '';
-  late int socialTraffic, sisTraffic;
-  double sortBy = 0;
+  List<PubModel> _pubDataFetch = [];
+  List<PubModel> _pubDataDeployed = [];
+  late facultyAnalyticsModel _facultyAnalyticsData;
+  late Timestamp _timeNow;
+
+  bool _isPubListLoaded = false;
+  bool _isHeaderClicked = false;
+  String _searchQuery = '';
+  double _sortBy = 0;
+
+  static const Color _primaryColor = Color.fromARGB(255, 36, 66, 117);
+  static const Color _lightGray = Color(0xFFF8F9FA);
+  static const Color _cardBackground = Colors.white;
 
   @override
   void initState() {
     super.initState();
-    timeNow = Timestamp.fromDate(DateTime.now());
-    facultyAnalyticsData = facultyAnalyticsModel(
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _timeNow = Timestamp.fromDate(DateTime.now());
+    _facultyAnalyticsData = facultyAnalyticsModel(
       totalStudents: 0,
       totalClasses: 0,
     );
@@ -41,11 +51,8 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
     _fetchPubList();
   }
 
-  String formatTimestamp(Timestamp timestamp, String format) {
-    DateTime dateTime = timestamp.toDate();
-    String formattedDate = DateFormat(format).format(dateTime);
-
-    return formattedDate;
+  String _formatTimestamp(Timestamp timestamp, String format) {
+    return DateFormat(format).format(timestamp.toDate());
   }
 
   Future<void> _fetchStudentsAnalytics() async {
@@ -55,7 +62,7 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
 
       final entityDoc = await _getEntityDocument(entityCollection, userID);
       if (entityDoc == null) {
-        print('No data found for the given userID.');
+        debugPrint('No data found for the given userID.');
         return;
       }
 
@@ -65,7 +72,7 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
       final analytics = await _computeAnalytics(subjectToDepartmentMap);
 
       setState(() {
-        facultyAnalyticsData = facultyAnalyticsModel(
+        _facultyAnalyticsData = facultyAnalyticsModel(
           totalStudents: analytics['totalStudents']!,
           totalClasses: analytics['totalClasses']!,
         );
@@ -75,7 +82,7 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
           context, 'Loaded', 'Analytical data fetched successfully.');
     } catch (e) {
       useToastify.showErrorToast(context, 'Error', 'Failed to load analytics.');
-      print(e);
+      debugPrint('Analytics error: $e');
     }
   }
 
@@ -92,10 +99,15 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
 
   Future<Map<String, String>> _getSubjectDepartmentMap(
       Map<String, dynamic> docData) async {
-    final String advisoryClassId = docData['advisoryClassId'] ?? '';
+    final List<dynamic> advisoryClassId = docData['advisoryClassId'] ?? [];
     final List<dynamic> subjectsListDynamic = docData['subjectsList'] ?? [];
-    final List<String> subjectsList = List<String>.from(subjectsListDynamic)
-      ..add(advisoryClassId);
+    final List<String> subjectsList = List<String>.from(subjectsListDynamic);
+
+    for (String classSubjectCode in advisoryClassId) {
+      if (!subjectsList.contains(classSubjectCode)) {
+        subjectsList.add(classSubjectCode);
+      }
+    }
 
     final Map<String, String> subjectToDepartmentMap = {};
     for (String classSubjectCode in subjectsList) {
@@ -108,7 +120,7 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
 
   Future<Map<String, int>> _computeAnalytics(
       Map<String, String> subjectToDepartmentMap) async {
-    int totalStudents = 0;
+    Set<String> uniqueStudents = {};
     int totalClasses = subjectToDepartmentMap.length;
 
     for (final entry in subjectToDepartmentMap.entries) {
@@ -123,12 +135,12 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
       if (deptQS.docs.isNotEmpty) {
         final classList =
             List<String>.from(deptQS.docs.first.data()['class-list'] ?? []);
-        totalStudents += classList.length;
+        uniqueStudents.addAll(classList);
       }
     }
 
     return {
-      'totalStudents': totalStudents,
+      'totalStudents': uniqueStudents.length,
       'totalClasses': totalClasses,
     };
   }
@@ -155,7 +167,7 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
           FirebaseFirestore.instance.collection("publication");
       final pubQS = await pubCollection.get();
 
-      PubDataFetch = pubQS.docs.map((doc) {
+      _pubDataFetch = pubQS.docs.map((doc) {
         return PubModel(
             pub_id: doc.get("pub_id"),
             pub_title: doc.get("pub_title"),
@@ -165,176 +177,143 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
       }).toList();
 
       setState(() {
-        PubDataDeployed = _filterUsers(query);
-        isPubListLoaded = true;
+        _pubDataDeployed = _filterAndSortPublications();
+        _isPubListLoaded = true;
       });
 
       useToastify.showLoadingToast(
           context, "Loaded", "Articles fetched successfully.");
     } catch (e) {
       useToastify.showErrorToast(context, "Error", "Failed to fetch articles.");
-      print(e);
+      debugPrint('Fetch publications error: $e');
     }
   }
 
-  Future<void> _pubViewLog(int pub_id) async {
+  Future<void> _incrementPubViews(int pubId) async {
     try {
-      CollectionReference trafficCollection =
-          FirebaseFirestore.instance.collection("publication");
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection("publication")
+          .where("pub_id", isEqualTo: pubId)
+          .get();
 
-      QuerySnapshot querySnapshot =
-          await trafficCollection.where("pub_id", isEqualTo: pub_id).get();
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final currentViews = (doc.data()['pub_views'] ?? 0) as int;
 
-      var docSnapshot = querySnapshot.docs.first;
-      var docData = docSnapshot.data() as Map<String, dynamic>;
-      int currentReactValue = docData['pub_views'] ?? 0;
-      await docSnapshot.reference.set({
-        'pub_views': currentReactValue + 1,
-      }, SetOptions(merge: true));
-
-      print('views data updated for publication no. $pub_id');
+        await doc.reference.update({'pub_views': currentViews + 1});
+        debugPrint('Views updated for publication $pubId');
+      }
     } catch (e) {
-      print('Error updating views count: $e');
+      debugPrint('Error updating views: $e');
     }
   }
 
-  List<PubModel> _filterUsers(String query) {
-    final filteredUsers = query.isEmpty
-        ? PubDataFetch
-        : PubDataFetch.where((user) {
-            return user.pub_title.toLowerCase().contains(query.toLowerCase());
-          }).toList();
+  List<PubModel> _filterAndSortPublications() {
+    var filtered = _searchQuery.isEmpty
+        ? _pubDataFetch
+        : _pubDataFetch
+            .where((pub) => pub.pub_title
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
 
-    switch (sortBy) {
+    switch (_sortBy) {
       case 0:
-        filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        filtered.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        break;
       case 0.5:
-        filteredUsers.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        filtered.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        break;
       case 1:
-        filteredUsers.sort((a, b) => a.pub_title.compareTo(b.pub_title));
+        filtered.sort((a, b) => a.pub_title.compareTo(b.pub_title));
+        break;
       case 1.5:
-        filteredUsers.sort((a, b) => b.pub_title.compareTo(a.pub_title));
+        filtered.sort((a, b) => b.pub_title.compareTo(a.pub_title));
+        break;
       case 2:
-        filteredUsers.sort((a, b) => a.pub_content.compareTo(b.pub_content));
+        filtered.sort((a, b) => a.pub_content.compareTo(b.pub_content));
+        break;
       case 2.5:
-        filteredUsers.sort((a, b) => b.pub_content.compareTo(a.pub_content));
+        filtered.sort((a, b) => b.pub_content.compareTo(a.pub_content));
+        break;
       case 3:
-        filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        filtered.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        break;
       case 3.5:
-        filteredUsers.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        filtered.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        break;
       case 4:
-        filteredUsers.sort((a, b) => a.pub_views.compareTo(b.pub_views));
+        filtered.sort((a, b) => a.pub_views.compareTo(b.pub_views));
+        break;
       case 4.5:
-        filteredUsers.sort((a, b) => b.pub_views.compareTo(a.pub_views));
+        filtered.sort((a, b) => b.pub_views.compareTo(a.pub_views));
+        break;
       default:
-        filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        filtered.sort((a, b) => b.pub_date.compareTo(a.pub_date));
     }
-    return filteredUsers.take(10).toList();
+    return filtered.take(10).toList();
   }
 
   void _onSearchChanged(String query) {
     setState(() {
-      this.query = query;
-      PubDataDeployed = _filterUsers(query);
+      _searchQuery = query;
+      _pubDataDeployed = _filterAndSortPublications();
     });
+  }
+
+  void _onHeaderTap(String headerType) {
+    setState(() {
+      double newSortBy;
+      switch (headerType) {
+        case 'TITLE':
+          newSortBy = _isHeaderClicked ? 1.5 : 1;
+          break;
+        case 'DATE':
+          newSortBy = _isHeaderClicked ? 0.5 : 0;
+          break;
+        case 'VIEWS':
+          newSortBy = _isHeaderClicked ? 4.5 : 4;
+          break;
+        default:
+          newSortBy = 0;
+      }
+
+      _sortBy = newSortBy;
+      _isHeaderClicked = !_isHeaderClicked;
+      _pubDataDeployed = _filterAndSortPublications();
+    });
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _isPubListLoaded = false;
+      _pubDataFetch.clear();
+      _pubDataDeployed.clear();
+    });
+    await _fetchPubList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _lightGray,
       body: RefreshIndicator(
-        onRefresh: _refreshUserList,
+        onRefresh: _refreshData,
+        color: _primaryColor,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: DynamicSizeService.calculateWidthSize(context, 0.03),
-              vertical: DynamicSizeService.calculateHeightSize(context, 0.02),
+            padding: EdgeInsets.all(
+              DynamicSizeService.calculateAspectRatioSize(context, 0.02),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.03)),
-                Row(children: [
-                  Text("Dashboard",
-                      style: TextStyle(
-                        fontSize: DynamicSizeService.calculateAspectRatioSize(
-                            context, 0.035),
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(200, 0, 0, 0),
-                      )),
-                  Spacer(),
-                  Text(
-                      '${formatTimestamp(Timestamp.now(), "MMMM d, yyyy | EEEE | h:mm a")}',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: DynamicSizeService.calculateAspectRatioSize(
-                              context, 0.013)))
-                ]),
-                Text(
-                    'Welcome back, Faculty ${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}!',
-                    style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: DynamicSizeService.calculateAspectRatioSize(
-                            context, 0.013))),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.08)),
-                WidgetSectionHeader(title: 'Educator Analytics'),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.05)),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _buildAnalyticsCard(
-                      HugeIcons.strokeRoundedChild,
-                      facultyAnalyticsData.totalStudents,
-                      'TOTAL STUDENTS',
-                      'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE")}',
-                      context),
-                  _buildAnalyticsCard(
-                      HugeIcons.strokeRoundedBook02,
-                      facultyAnalyticsData.totalClasses,
-                      'TOTAL CLASSES',
-                      'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE")}',
-                      context),
-                ]),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.1)),
-                WidgetSectionHeader(title: 'Institutional Articles'),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.05)),
-                _buildSearchBar(),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.01)),
-                _buildTableHeader(),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.02)),
-                isPubListLoaded
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: PubDataDeployed.length,
-                        itemBuilder: (context, index) {
-                          final pub = PubDataDeployed[index];
-                          return _buildTableRow(pub);
-                        },
-                      )
-                    : Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text("Fetching users from the database..."),
-                        ),
-                      ),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.1)),
+                _buildHeader(),
+                const SizedBox(height: 32),
+                _buildDashboardSection(),
+                const SizedBox(height: 40),
+                _buildAnnouncementsSection(),
               ],
             ),
           ),
@@ -343,153 +322,104 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildHeader() {
+    final globalState = Provider.of<GlobalState>(context, listen: false);
+
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEDDD),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          colors: [_primaryColor, Color.fromARGB(255, 52, 89, 149)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryColor.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "Find articles through  PUB_ID, title, or date.",
-          hintStyle: TextStyle(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Educator Dashboard",
+                style: GoogleFonts.montserrat(
+                  fontSize: DynamicSizeService.calculateAspectRatioSize(
+                      context, 0.032),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _formatTimestamp(Timestamp.now(), "MMM d, yyyy | h:mm a"),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Welcome back, Faculty ${globalState.userName00} ${globalState.userName01}!',
+            style: GoogleFonts.montserrat(
+              fontSize:
+                  DynamicSizeService.calculateAspectRatioSize(context, 0.016),
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Teaching Overview',
+          style: GoogleFonts.montserrat(
             fontSize:
-                DynamicSizeService.calculateAspectRatioSize(context, 0.015),
-          ),
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            vertical: DynamicSizeService.calculateHeightSize(context, 0.02),
-            horizontal: DynamicSizeService.calculateWidthSize(context, 0.05),
-          ),
-        ),
-        onChanged: _onSearchChanged,
-      ),
-    );
-  }
-
-  Widget _buildTableHeader() {
-    return Card(
-      elevation: 0.5,
-      color: Color.fromARGB(255, 253, 253, 253),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-      child: Padding(
-        padding: EdgeInsets.all(15),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildTableHeaderCell("PUB_ID"),
-            _buildTableHeaderCell("TITLE"),
-            _buildTableHeaderCell("DATE"),
-            _buildTableHeaderCell("VIEWS"),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableHeaderCell(String text) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          if (isHeaderClicked == false)
-            switch (text) {
-              case 'PUB_ID':
-                sortBy = 0;
-                isHeaderClicked = true;
-                break;
-              case 'TITLE':
-                sortBy = 1;
-                isHeaderClicked = true;
-                break;
-              case 'DATE':
-                sortBy = 2;
-                isHeaderClicked = true;
-                break;
-              case 'VIEWS':
-                sortBy = 3;
-                isHeaderClicked = true;
-                break;
-            }
-          else
-            switch (text) {
-              case 'PUB_ID':
-                sortBy = 0.5;
-                isHeaderClicked = false;
-                break;
-              case 'TITLE':
-                sortBy = 1.5;
-                isHeaderClicked = false;
-                break;
-              case 'DATE':
-                sortBy = 2.5;
-                isHeaderClicked = false;
-                break;
-              case 'VIEWS':
-                sortBy = 3.5;
-                isHeaderClicked = false;
-                break;
-            }
-          PubDataDeployed = _filterUsers(query);
-        });
-      },
-      child: SizedBox(
-        width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Montserrat',
+                DynamicSizeService.calculateAspectRatioSize(context, 0.024),
             fontWeight: FontWeight.bold,
-            fontSize:
-                DynamicSizeService.calculateAspectRatioSize(context, 0.013),
+            color: _primaryColor,
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _buildAnalyticsCard(
+              HugeIcons.strokeRoundedChild,
+              _facultyAnalyticsData.totalStudents,
+              'STUDENTS',
+              'As of ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context),
+          _buildAnalyticsCard(
+              HugeIcons.strokeRoundedBook02,
+              _facultyAnalyticsData.totalClasses,
+              'CLASSES',
+              'As of ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context),
+        ]),
+      ],
     );
-  }
-
-  Widget _buildTableRow(PubModel pub) {
-    return InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) =>
-                ViewPubDialog(onRefresh: _refreshUserList, pubModel: pub),
-          );
-          _pubViewLog(pub.pub_id);
-          setState(() {
-            PubDataDeployed = _filterUsers(query);
-          });
-        },
-        onDoubleTap: () {},
-        child: Card(
-            elevation: 0.5,
-            color: Color.fromARGB(255, 253, 253, 253),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0)),
-            child: Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTableRowCell('${pub.pub_id}', 0),
-                      _buildTableRowCell(pub.pub_title, 1),
-                      _buildTableRowCell(pub.pub_date.toDate().toString(), 2),
-                      _buildTableRowCell('${pub.pub_views}', 3)
-                    ]))));
-  }
-
-  Widget _buildTableRowCell(String text, int type) {
-    return SizedBox(
-        width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: SelectableText(text,
-            style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: DynamicSizeService.calculateAspectRatioSize(
-                    context, 0.013))));
   }
 
   Widget _buildAnalyticsCard(IconData icon, num data, String label,
@@ -579,13 +509,263 @@ class _FacultyFirstSectionState extends State<FacultyFirstSection> {
                     ])))).increaseSizeOnHover(1.2));
   }
 
-  Future<void> _refreshUserList() async {
-    setState(() {
-      isPubListLoaded = false;
-      PubDataFetch.clear();
-      PubDataDeployed.clear();
-    });
+  Widget _buildAnnouncementsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Institutional Announcements',
+          style: GoogleFonts.montserrat(
+            fontSize:
+                DynamicSizeService.calculateAspectRatioSize(context, 0.024),
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildModernSearchBar(),
+        const SizedBox(height: 16),
+        _buildModernPublicationsTable(),
+      ],
+    );
+  }
 
-    await _fetchPubList();
+  Widget _buildModernSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Search announcements...",
+          hintStyle: GoogleFonts.montserrat(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+          prefixIcon: Icon(
+            Icons.search_outlined,
+            color: Colors.grey.shade500,
+            size: 20,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: _cardBackground,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 20,
+          ),
+        ),
+        style: GoogleFonts.montserrat(fontSize: 14),
+        onChanged: _onSearchChanged,
+      ),
+    );
+  }
+
+  Widget _buildModernPublicationsTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildModernTableHeader(),
+          const Divider(height: 1),
+          _isPubListLoaded
+              ? _buildPublicationsList()
+              : _buildLoadingIndicator(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTableHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: _buildHeaderCell("TITLE")),
+          Expanded(flex: 2, child: _buildHeaderCell("DATE")),
+          Expanded(flex: 1, child: _buildHeaderCell("VIEWS")),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String text) {
+    return InkWell(
+      onTap: () => _onHeaderTap(text),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Text(
+              text,
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: _primaryColor,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _isHeaderClicked
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              size: 16,
+              color: _primaryColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPublicationsList() {
+    if (_pubDataDeployed.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _pubDataDeployed.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        return _buildModernPublicationRow(_pubDataDeployed[index]);
+      },
+    );
+  }
+
+  Widget _buildModernPublicationRow(PubModel pub) {
+    return InkWell(
+      onTap: () async {
+        await _incrementPubViews(pub.pub_id);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => ViewPubDialog(
+              onRefresh: _refreshData,
+              pubModel: pub,
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Text(
+                pub.pub_title,
+                style: GoogleFonts.montserrat(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                DateFormat('MMM d, yyyy').format(pub.pub_date.toDate()),
+                style: GoogleFonts.montserrat(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.visibility_outlined,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${pub.pub_views}',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(
+            Icons.article_outlined,
+            size: 48,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No announcements found',
+            style: GoogleFonts.montserrat(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search terms',
+            style: GoogleFonts.montserrat(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Padding(
+      padding: EdgeInsets.all(40),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: _primaryColor,
+          strokeWidth: 2,
+        ),
+      ),
+    );
   }
 }

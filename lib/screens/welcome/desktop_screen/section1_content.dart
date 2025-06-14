@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sis_project/screens/welcome/multifunc_authenticate.dart';
+import 'package:sis_project/screens/welcome/desktop_screen/multifunc_authenticate.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:sis_project/services/global_state.dart';
 import 'package:provider/provider.dart';

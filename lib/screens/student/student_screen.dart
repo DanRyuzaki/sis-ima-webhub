@@ -2,6 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:sis_project/screens/student/section1_content/section1_main.dart';
+import 'package:sis_project/screens/student/section2_content/section2_main.dart';
+import 'package:sis_project/screens/student/section3_content/section3_main.dart';
+import 'package:sis_project/screens/student/section4_content/section4_main.dart';
 import 'package:sis_project/screens/student/section5_content/section5_main.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:provider/provider.dart';
@@ -69,8 +73,8 @@ class _StudentScreenState extends State<StudentScreen> {
                           label: Text('Grades'),
                         ),
                         NavigationRailDestination(
-                          icon: Icon(HugeIcons.strokeRoundedCourse),
-                          label: Text('Subjects'),
+                          icon: Icon(HugeIcons.strokeRoundedLayoutTable02),
+                          label: Text('Classes'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(HugeIcons.strokeRoundedCalendar03),
@@ -140,20 +144,24 @@ class _StudentScreenState extends State<StudentScreen> {
   }
 
   Widget _buildContent(int index) {
+    final queryParams = Uri.base.queryParameters;
+    final sessionUser = int.parse(queryParams['page'].toString());
+
     switch (index) {
       case 0:
-        return const Text('Student home content.');
+        return StudentFirstSection();
       case 1:
-        return const Text('Edit your student profile.');
+        return StudentSecondSection();
       case 2:
-        return const Text('View your grades status.');
+        return StudentThirdSection();
       case 3:
-        return const Text('View your enrolled subjects.');
-
+        return StudentFourthSection();
       case 4:
-        return StudentFifthSection();
+        return StudentFifthSection(userType: sessionUser);
       default:
-        return const Text('Error loading content.');
+        return Center(
+            child: CircularProgressIndicator(
+                color: Color.fromARGB(255, 36, 66, 117)));
     }
   }
 }

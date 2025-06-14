@@ -3,7 +3,7 @@ const List<String> WELCOME_NAVBAR = [
 ];
 const List<String> WELCOME_PROGRAM_OFFERINGS_TITLE = [
   'PRE-SCHOOL',
-  'ELEMENTARY',
+  'PRIMARY SCHOOL',
   'JUNIOR HIGH SCHOOL',
   'SENIOR HIGH SCHOOL'
 ];
@@ -12,7 +12,7 @@ const List<String> WELCOME_PROGRAM_OFFERINGS_DESCRIPTION = [
   'A nurturing environment where young learners develop foundational skills through play-based and interactive activities, fostering curiosity, creativity, and a love for learning.',
   'A comprehensive program that builds core academic competencies while instilling strong values, critical thinking, and a sense of responsibility in young minds.',
   'A dynamic curriculum that prepares students for advanced studies, emphasizing academic excellence, leadership, and personal growth in a supportive community.',
-  'Specialized tracks designed to equip students with the knowledge and skills for college readiness, career paths, and lifelong learning in their chosen fields.'
+  'Specialized strands under the Academic Track—ABM, GAS, and HUMSS—and the TVL Track—ICT and HE—are designed to equip students with the knowledge and skills necessary for college readiness, career development, and lifelong learning in their chosen fields.'
 ];
 
 const List<String> WELCOME_INSTITUTION_INFO = [

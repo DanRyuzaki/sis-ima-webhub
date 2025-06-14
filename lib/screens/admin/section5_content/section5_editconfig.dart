@@ -81,48 +81,49 @@ class _EditConfigDialogState extends State<EditConfigDialog> {
             child: Container(
               width: DynamicSizeService.calculateWidthSize(context, 0.3),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Configure ${config.name}",
-                      style: TextStyle(
-                          fontSize: DynamicSizeService.calculateAspectRatioSize(
-                              context, 0.025),
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(200, 0, 0, 0))),
-                  SizedBox(height: 16),
-                  _buildTextField(_configController,
-                      '/${config.category.split('=')[1]}/${config.name}'),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text('Cancel',
-                            style: GoogleFonts.montserrat(color: Colors.black)),
-                      ),
-                      SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => _initializeConfig(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color.fromARGB(255, 36, 66, 117),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Text('Submit',
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Configure ${config.name}",
+                        style: TextStyle(
+                            fontSize:
+                                DynamicSizeService.calculateAspectRatioSize(
+                                    context, 0.025),
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(200, 0, 0, 0))),
+                    SizedBox(height: 16),
+                    _buildTextField(_configController,
+                        '/${config.category.split('=')[1]}/${config.name}'),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('Cancel',
                               style:
-                                  GoogleFonts.montserrat(color: Colors.white)),
+                                  GoogleFonts.montserrat(color: Colors.black)),
                         ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => _initializeConfig(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 36, 66, 117),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Text('Submit',
+                                style: GoogleFonts.montserrat(
+                                    color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    )
+                  ]),
             ),
           ),
         ),

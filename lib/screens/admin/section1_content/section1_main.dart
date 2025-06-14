@@ -1,18 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:sis_project/models/analyticsModel.dart';
+import 'package:sis_project/models/adminAnalyticsModel.dart';
 import 'package:sis_project/models/pubModel.dart';
 import 'package:sis_project/components/package_toastification.dart';
 import 'package:sis_project/screens/admin/section1_content/section1_addpub.dart';
 import 'package:sis_project/screens/admin/section1_content/section1_viewpub.dart';
-import 'package:sis_project/screens/welcome/widget_buildsectionheader.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:sis_project/services/global_state.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_on_hover/animate_on_hover.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AdminFirstSection extends StatefulWidget {
   const AdminFirstSection({super.key});
@@ -22,21 +22,32 @@ class AdminFirstSection extends StatefulWidget {
 }
 
 class _AdminFirstSectionState extends State<AdminFirstSection> {
-  List<PubModel> PubDataFetch = [], PubDataDeployed = [];
-  bool isPubListLoaded = false, isHeaderClicked = false;
-  late AnalyticsModel AnalyticsData;
-  late Timestamp timeNow;
-  late String query = '';
-  late int socialTraffic, sisTraffic;
-  double sortBy = 0;
+  List<PubModel> _pubDataFetch = [];
+  List<PubModel> _pubDataDeployed = [];
+  late AnalyticsModel _analyticsData;
+  late Timestamp _timeNow;
+  late int _socialTraffic, _sisTraffic;
+
+  bool _isPubListLoaded = false;
+  bool _isHeaderClicked = false;
+  String _query = '';
+  double _sortBy = 0;
+
+  static const Color _primaryColor = Color.fromARGB(255, 36, 66, 117);
+  static const Color _lightGray = Color(0xFFF8F9FA);
+  static const Color _cardBackground = Colors.white;
 
   @override
   void initState() {
     super.initState();
-    timeNow = Timestamp.fromDate(DateTime.now());
-    AnalyticsData = AnalyticsModel(
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _timeNow = Timestamp.fromDate(DateTime.now());
+    _analyticsData = AnalyticsModel(
       studentsEnrolled: 0,
-      facultiesEmployed: 0,
+      employeesRegistered: 0,
       systemTraffic: 0,
       socialTraffic: 0,
     );
@@ -45,274 +56,260 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     _fetchPubList();
   }
 
-  String formatTimestamp(Timestamp timestamp, String format) {
-    DateTime dateTime = timestamp.toDate();
-    String formattedDate = DateFormat(format).format(dateTime);
-
-    return formattedDate;
+  String _formatTimestamp(Timestamp timestamp, String format) {
+    return DateFormat(format).format(timestamp.toDate());
   }
 
   Future<void> _fetchAnalytics() async {
     try {
       final entityCollection = FirebaseFirestore.instance.collection("entity");
-      final studentsTotalQS =
-          await entityCollection.where('entity', isEqualTo: 2).get();
-      final facultiesTotalQS =
-          await entityCollection.where('entity', isEqualTo: 1).get();
+      final results = await Future.wait([
+        entityCollection.where('entity', isEqualTo: 3).get(),
+        entityCollection.where('entity', isEqualTo: 2).get(),
+        entityCollection.where('entity', isEqualTo: 1).get(),
+      ]);
+
       setState(() {
-        AnalyticsData.studentsEnrolled = studentsTotalQS.size;
-        AnalyticsData.facultiesEmployed = facultiesTotalQS.size;
+        _analyticsData.studentsEnrolled = results[0].size;
+        _analyticsData.employeesRegistered = results[1].size + results[2].size;
       });
 
       useToastify.showLoadingToast(
-          context, 'Loaded', 'Analytical data fetched successfully.');
+        context,
+        'Loaded',
+        'Analytical data fetched successfully.',
+      );
     } catch (e) {
       useToastify.showErrorToast(context, 'Error', 'Failed to load analytics.');
-      print(e);
+      debugPrint('Analytics error: $e');
     }
   }
 
   Future<void> _loadTrafficLogs() async {
-    int social = await _fetchTrafficLog('social');
-    int sis = await _fetchTrafficLog('sis');
+    try {
+      final results = await Future.wait([
+        _fetchTrafficLog('social'),
+        _fetchTrafficLog('sis'),
+      ]);
 
-    setState(() {
-      socialTraffic = social;
-      sisTraffic = sis;
-      AnalyticsData.systemTraffic = sis;
-      AnalyticsData.socialTraffic = social;
-    });
+      setState(() {
+        _socialTraffic = results[0];
+        _sisTraffic = results[1];
+        _analyticsData.systemTraffic = _sisTraffic;
+        _analyticsData.socialTraffic = _socialTraffic;
+      });
+    } catch (e) {
+      debugPrint('Traffic logs error: $e');
+    }
   }
 
   Future<int> _fetchTrafficLog(String type) async {
     try {
       String formattedDate = DateFormat('MMMM d, y').format(DateTime.now());
-      CollectionReference trafficCollection =
-          FirebaseFirestore.instance.collection("trafficlog");
+      CollectionReference trafficCollection = FirebaseFirestore.instance
+          .collection("trafficlog");
 
-      QuerySnapshot querySnapshot = await trafficCollection
-          .where("timestamp", isEqualTo: formattedDate)
-          .get();
+      QuerySnapshot querySnapshot =
+          await trafficCollection
+              .where("timestamp", isEqualTo: formattedDate)
+              .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         var docData = querySnapshot.docs.first.data() as Map<String, dynamic>;
         int sis = docData['sis-traffic'] ?? 0;
         int social = docData['social-traffic'] ?? 0;
 
-        if (type == 'sis') {
-          return sis;
-        } else if (type == 'social') {
-          return social;
-        } else {
-          return 0;
-        }
-      } else {
-        return 0;
+        return type == 'sis' ? sis : (type == 'social' ? social : 0);
       }
+      return 0;
     } catch (e) {
-      print('Error fetching traffic log: $e');
+      debugPrint('Error fetching traffic log: $e');
       return 0;
     }
   }
 
   Future<void> _fetchPubList() async {
     try {
-      final pubCollection =
-          FirebaseFirestore.instance.collection("publication");
+      final pubCollection = FirebaseFirestore.instance.collection(
+        "publication",
+      );
       final pubQS = await pubCollection.get();
 
-      PubDataFetch = pubQS.docs.map((doc) {
-        return PubModel(
-            pub_id: doc.get("pub_id"),
-            pub_title: doc.get("pub_title"),
-            pub_content: doc.get("pub_content"),
-            pub_date: doc.get("pub_date"),
-            pub_views: doc.get("pub_views"));
-      }).toList();
+      _pubDataFetch =
+          pubQS.docs.map((doc) {
+            return PubModel(
+              pub_id: doc.get("pub_id"),
+              pub_title: doc.get("pub_title"),
+              pub_content: doc.get("pub_content"),
+              pub_date: doc.get("pub_date"),
+              pub_views: doc.get("pub_views"),
+            );
+          }).toList();
 
       setState(() {
-        PubDataDeployed = _filterUsers(query);
-        isPubListLoaded = true;
+        _pubDataDeployed = _filterAndSortPublications();
+        _isPubListLoaded = true;
       });
 
       useToastify.showLoadingToast(
-          context, "Loaded", "Articles fetched successfully.");
+        context,
+        "Loaded",
+        "Articles fetched successfully.",
+      );
     } catch (e) {
       useToastify.showErrorToast(context, "Error", "Failed to fetch articles.");
-      print(e);
+      debugPrint('Fetch publications error: $e');
     }
   }
 
-  List<PubModel> _filterUsers(String query) {
-    final filteredUsers = query.isEmpty
-        ? PubDataFetch
-        : PubDataFetch.where((user) {
-            return user.pub_title.toLowerCase().contains(query.toLowerCase());
-          }).toList();
+  Future<void> _incrementPubViews(int pubId) async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection("publication")
+              .where("pub_id", isEqualTo: pubId)
+              .get();
 
-    switch (sortBy) {
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final currentViews = (doc.data()['pub_views'] ?? 0) as int;
+
+        await doc.reference.update({'pub_views': currentViews + 1});
+        debugPrint('Views updated for publication $pubId');
+      }
+    } catch (e) {
+      debugPrint('Error updating views: $e');
+    }
+  }
+
+  List<PubModel> _filterAndSortPublications() {
+    final filteredUsers =
+        _query.isEmpty
+            ? _pubDataFetch
+            : _pubDataFetch.where((user) {
+              return user.pub_title.toLowerCase().contains(
+                _query.toLowerCase(),
+              );
+            }).toList();
+
+    switch (_sortBy) {
       case 0:
         filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        break;
       case 0.5:
         filteredUsers.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        break;
       case 1:
         filteredUsers.sort((a, b) => a.pub_title.compareTo(b.pub_title));
+        break;
       case 1.5:
         filteredUsers.sort((a, b) => b.pub_title.compareTo(a.pub_title));
+        break;
       case 2:
         filteredUsers.sort((a, b) => a.pub_content.compareTo(b.pub_content));
+        break;
       case 2.5:
         filteredUsers.sort((a, b) => b.pub_content.compareTo(a.pub_content));
+        break;
       case 3:
         filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        break;
       case 3.5:
         filteredUsers.sort((a, b) => b.pub_date.compareTo(a.pub_date));
+        break;
       case 4:
         filteredUsers.sort((a, b) => a.pub_views.compareTo(b.pub_views));
+        break;
       case 4.5:
         filteredUsers.sort((a, b) => b.pub_views.compareTo(a.pub_views));
+        break;
       default:
-        filteredUsers.sort((a, b) => a.pub_date.compareTo(b.pub_date));
+        filteredUsers.sort((a, b) => b.pub_date.compareTo(a.pub_date));
     }
     return filteredUsers.take(10).toList();
   }
 
   void _onSearchChanged(String query) {
     setState(() {
-      this.query = query;
-      PubDataDeployed = _filterUsers(query);
+      _query = query;
+      _pubDataDeployed = _filterAndSortPublications();
     });
+  }
+
+  void _onHeaderTap(String headerType) {
+    setState(() {
+      double newSortBy;
+      switch (headerType) {
+        case 'PUB_ID':
+          newSortBy = _isHeaderClicked ? 0.5 : 0;
+          break;
+        case 'TITLE':
+          newSortBy = _isHeaderClicked ? 1.5 : 1;
+          break;
+        case 'DATE':
+          newSortBy = _isHeaderClicked ? 3.5 : 3;
+          break;
+        case 'VIEWS':
+          newSortBy = _isHeaderClicked ? 4.5 : 4;
+          break;
+        default:
+          newSortBy = 0;
+      }
+
+      _sortBy = newSortBy;
+      _isHeaderClicked = !_isHeaderClicked;
+      _pubDataDeployed = _filterAndSortPublications();
+    });
+  }
+
+  Future<void> _refreshUserList() async {
+    setState(() {
+      _isPubListLoaded = false;
+      _pubDataFetch.clear();
+      _pubDataDeployed.clear();
+    });
+
+    await Future.wait([_fetchAnalytics(), _loadTrafficLogs(), _fetchPubList()]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _lightGray,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Color.fromARGB(255, 36, 66, 117),
-        child:
-            HugeIcon(icon: HugeIcons.strokeRoundedAdd01, color: Colors.white),
+        child: HugeIcon(
+          icon: HugeIcons.strokeRoundedAdd01,
+          color: Colors.white,
+        ),
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => AddPubDialog(
-              onRefresh: _refreshUserList,
-              PubDataDeployed: PubDataDeployed,
-            ),
+            builder:
+                (context) => AddPubDialog(
+                  onRefresh: _refreshUserList,
+                  PubDataDeployed: _pubDataDeployed,
+                ),
           );
         },
       ),
-      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _refreshUserList,
+        color: _primaryColor,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: DynamicSizeService.calculateWidthSize(context, 0.03),
-              vertical: DynamicSizeService.calculateHeightSize(context, 0.02),
+            padding: EdgeInsets.all(
+              DynamicSizeService.calculateAspectRatioSize(context, 0.02),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.03)),
-                Row(children: [
-                  Text("Dashboard",
-                      style: TextStyle(
-                        fontSize: DynamicSizeService.calculateAspectRatioSize(
-                            context, 0.035),
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(200, 0, 0, 0),
-                      )),
-                  Spacer(),
-                  Text(
-                      '${formatTimestamp(Timestamp.now(), "MMMM d, yyyy | EEEE | h:mm a")}',
-                      style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: DynamicSizeService.calculateAspectRatioSize(
-                              context, 0.013)))
-                ]),
-                Text(
-                    'Welcome back, Admin ${Provider.of<GlobalState>(context, listen: false).userName00} ${Provider.of<GlobalState>(context, listen: false).userName01}!',
-                    style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: DynamicSizeService.calculateAspectRatioSize(
-                            context, 0.013))),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.08)),
-                WidgetSectionHeader(title: 'System Analytics'),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.05)),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedBackpack01,
-                          AnalyticsData.studentsEnrolled,
-                          'STUDENTS ENROLLED',
-                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
-                          context),
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedSchoolTie,
-                          AnalyticsData.facultiesEmployed,
-                          'FACULTIES EMPLOYED',
-                          'As of ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}',
-                          context),
-                    ]),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedAnalytics03,
-                          AnalyticsData.systemTraffic,
-                          'SIS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}region',
-                          context),
-                      _buildAnalyticsCard(
-                          HugeIcons.strokeRoundedTrafficJam02,
-                          AnalyticsData.socialTraffic,
-                          'SOCIALS TRAFFIC (/day)',
-                          'For ${formatTimestamp(timeNow, "MMMM d, yyyy | EEEE | h:mm a 'UTC' Z")}cregion',
-                          context)
-                    ])
-                  ],
-                ),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.1)),
-                WidgetSectionHeader(title: 'Institutional Articles'),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.05)),
-                _buildSearchBar(),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.01)),
-                _buildTableHeader(),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.02)),
-                isPubListLoaded
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: PubDataDeployed.length,
-                        itemBuilder: (context, index) {
-                          final pub = PubDataDeployed[index];
-                          return _buildTableRow(pub);
-                        },
-                      )
-                    : Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text("Fetching users from the database..."),
-                        ),
-                      ),
-                SizedBox(
-                    height:
-                        DynamicSizeService.calculateHeightSize(context, 0.1)),
+                _buildHeader(),
+                const SizedBox(height: 32),
+                _buildDashboardSection(),
+                const SizedBox(height: 40),
+                _buildAnnouncementsSection(),
               ],
             ),
           ),
@@ -321,247 +318,538 @@ class _AdminFirstSectionState extends State<AdminFirstSection> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildHeader() {
+    final globalState = Provider.of<GlobalState>(context, listen: false);
+
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEDDD),
+        gradient: const LinearGradient(
+          colors: [_primaryColor, Color.fromARGB(255, 52, 89, 149)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryColor.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Admin Dashboard",
+                style: GoogleFonts.montserrat(
+                  fontSize: DynamicSizeService.calculateAspectRatioSize(
+                    context,
+                    0.032,
+                  ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _formatTimestamp(Timestamp.now(), "MMM d, yyyy | h:mm a"),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Welcome back, Admin ${globalState.userName00} ${globalState.userName01}!',
+            style: GoogleFonts.montserrat(
+              fontSize: DynamicSizeService.calculateAspectRatioSize(
+                context,
+                0.016,
+              ),
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'System Summary',
+          style: GoogleFonts.montserrat(
+            fontSize: DynamicSizeService.calculateAspectRatioSize(
+              context,
+              0.024,
+            ),
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildAnalyticsCard(
+              HugeIcons.strokeRoundedBackpack01,
+              _analyticsData.studentsEnrolled,
+              'ENROLLED STUDENTS',
+              'As of ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context,
+            ),
+            _buildAnalyticsCard(
+              HugeIcons.strokeRoundedSchoolTie,
+              _analyticsData.employeesRegistered,
+              'REGISTERED EMPLOYEES',
+              'As of ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context,
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildAnalyticsCard(
+              HugeIcons.strokeRoundedAnalytics03,
+              _analyticsData.systemTraffic,
+              'SIS TRAFFIC (/day)',
+              'For ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context,
+            ),
+            _buildAnalyticsCard(
+              HugeIcons.strokeRoundedTrafficJam02,
+              _analyticsData.socialTraffic,
+              'SOCIALS TRAFFIC (/day)',
+              'For ${_formatTimestamp(_timeNow, "MMMM d, yyyy | EEEE")}',
+              context,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnalyticsCard(
+    IconData icon,
+    num data,
+    String label,
+    String description,
+    BuildContext context,
+  ) {
+    return Padding(
+      padding: EdgeInsets.all(
+        DynamicSizeService.calculateAspectRatioSize(context, 0.025),
+      ),
+      child: InkWell(
+        onTap: () {},
+        child: Container(
+          height: DynamicSizeService.calculateHeightSize(context, 0.25),
+          width: DynamicSizeService.calculateWidthSize(context, 0.30),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            borderRadius: BorderRadius.circular(8.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.6),
+                spreadRadius: 4,
+                blurRadius: 13,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(
+              DynamicSizeService.calculateAspectRatioSize(context, 0.016),
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: DynamicSizeService.calculateHeightSize(
+                    context,
+                    0.010,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: DynamicSizeService.calculateAspectRatioSize(
+                        context,
+                        0.045,
+                      ),
+                    ),
+                    SizedBox(
+                      width: DynamicSizeService.calculateWidthSize(
+                        context,
+                        0.015,
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedFlipCounter(
+                            value: data,
+                            duration: const Duration(milliseconds: 1000),
+                            textStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize:
+                                  DynamicSizeService.calculateAspectRatioSize(
+                                    context,
+                                    0.038,
+                                  ),
+                              color: const Color.fromARGB(250, 13, 46, 102),
+                            ),
+                          ),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize:
+                                  DynamicSizeService.calculateAspectRatioSize(
+                                    context,
+                                    0.012,
+                                  ),
+                              color: const Color.fromARGB(250, 13, 46, 102),
+                            ),
+                          ),
+                          SizedBox(
+                            height: DynamicSizeService.calculateHeightSize(
+                              context,
+                              0.003,
+                            ),
+                          ),
+                          SizedBox(
+                            width: DynamicSizeService.calculateWidthSize(
+                              context,
+                              0.030,
+                            ),
+                            child: const Divider(
+                              thickness: 2.5,
+                              color: Color.fromARGB(250, 13, 46, 102),
+                            ),
+                          ),
+                          SizedBox(
+                            height: DynamicSizeService.calculateHeightSize(
+                              context,
+                              0.005,
+                            ),
+                          ),
+                          Text(
+                            description,
+                            softWrap: true,
+                            overflow: TextOverflow.fade,
+                            style: TextStyle(
+                              color: const Color.fromARGB(191, 0, 0, 0),
+                              fontSize:
+                                  DynamicSizeService.calculateAspectRatioSize(
+                                    context,
+                                    0.012,
+                                  ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: DynamicSizeService.calculateHeightSize(
+                              context,
+                              0.010,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ).increaseSizeOnHover(1.02),
+    );
+  }
+
+  Widget _buildAnnouncementsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Institutional Announcements',
+          style: GoogleFonts.montserrat(
+            fontSize: DynamicSizeService.calculateAspectRatioSize(
+              context,
+              0.024,
+            ),
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildModernSearchBar(),
+        const SizedBox(height: 16),
+        _buildModernPublicationsTable(),
+      ],
+    );
+  }
+
+  Widget _buildModernSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBackground,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: "Find articles through  PUB_ID, title, or date.",
-          hintStyle: TextStyle(
-            fontSize:
-                DynamicSizeService.calculateAspectRatioSize(context, 0.015),
+          hintText: "Search articles...",
+          hintStyle: GoogleFonts.montserrat(
+            fontSize: 14,
+            color: Colors.grey.shade500,
           ),
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            vertical: DynamicSizeService.calculateHeightSize(context, 0.02),
-            horizontal: DynamicSizeService.calculateWidthSize(context, 0.05),
+          prefixIcon: Icon(
+            Icons.search_outlined,
+            color: Colors.grey.shade500,
+            size: 20,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: _cardBackground,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 20,
           ),
         ),
+        style: GoogleFonts.montserrat(fontSize: 14),
         onChanged: _onSearchChanged,
       ),
     );
   }
 
-  Widget _buildTableHeader() {
-    return Card(
-      elevation: 0.5,
-      color: Color.fromARGB(255, 253, 253, 253),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+  Widget _buildModernPublicationsTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildModernTableHeader(),
+          const Divider(height: 1),
+          _isPubListLoaded
+              ? _buildPublicationsList()
+              : _buildLoadingIndicator(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTableHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(flex: 1, child: _buildHeaderCell("PUB_ID")),
+          Expanded(flex: 3, child: _buildHeaderCell("TITLE")),
+          Expanded(flex: 2, child: _buildHeaderCell("DATE")),
+          Expanded(flex: 1, child: _buildHeaderCell("VIEWS")),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String text) {
+    return InkWell(
+      onTap: () => _onHeaderTap(text),
+      borderRadius: BorderRadius.circular(6),
       child: Padding(
-        padding: EdgeInsets.all(15),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildTableHeaderCell("PUB_ID"),
-            _buildTableHeaderCell("TITLE"),
-            _buildTableHeaderCell("DATE"),
-            _buildTableHeaderCell("VIEWS"),
+            Text(
+              text,
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: _primaryColor,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _isHeaderClicked
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              size: 16,
+              color: _primaryColor,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTableHeaderCell(String text) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          if (isHeaderClicked == false)
-            switch (text) {
-              case 'PUB_ID':
-                sortBy = 0;
-                isHeaderClicked = true;
-                break;
-              case 'TITLE':
-                sortBy = 1;
-                isHeaderClicked = true;
-                break;
-              case 'DATE':
-                sortBy = 2;
-                isHeaderClicked = true;
-                break;
-              case 'VIEWS':
-                sortBy = 3;
-                isHeaderClicked = true;
-                break;
-            }
-          else
-            switch (text) {
-              case 'PUB_ID':
-                sortBy = 0.5;
-                isHeaderClicked = false;
-                break;
-              case 'TITLE':
-                sortBy = 1.5;
-                isHeaderClicked = false;
-                break;
-              case 'DATE':
-                sortBy = 2.5;
-                isHeaderClicked = false;
-                break;
-              case 'VIEWS':
-                sortBy = 3.5;
-                isHeaderClicked = false;
-                break;
-            }
+  Widget _buildPublicationsList() {
+    if (_pubDataDeployed.isEmpty) {
+      return _buildEmptyState();
+    }
 
-          // 👇 ADD THIS
-          PubDataDeployed = _filterUsers(query);
-        });
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _pubDataDeployed.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        return _buildModernPublicationRow(_pubDataDeployed[index]);
       },
-      child: SizedBox(
-        width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.bold,
-            fontSize:
-                DynamicSizeService.calculateAspectRatioSize(context, 0.013),
-          ),
+    );
+  }
+
+  Widget _buildModernPublicationRow(PubModel pub) {
+    return InkWell(
+      onTap: () async {
+        await _incrementPubViews(pub.pub_id);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder:
+                (context) =>
+                    ViewPubDialog(onRefresh: _refreshUserList, pubModel: pub),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Text(
+                '${pub.pub_id}',
+                style: GoogleFonts.montserrat(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                pub.pub_title,
+                style: GoogleFonts.montserrat(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                DateFormat('MMM d, yyyy').format(pub.pub_date.toDate()),
+                style: GoogleFonts.montserrat(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.visibility_outlined,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${pub.pub_views}',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTableRow(PubModel pub) {
-    return InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) =>
-                ViewPubDialog(onRefresh: _refreshUserList, pubModel: pub),
-          );
-        },
-        onDoubleTap: () {},
-        child: Card(
-            elevation: 0.5,
-            color: Color.fromARGB(255, 253, 253, 253),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0)),
-            child: Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTableRowCell('${pub.pub_id}', 0),
-                      _buildTableRowCell(pub.pub_title, 1),
-                      _buildTableRowCell(pub.pub_date.toDate().toString(), 2),
-                      _buildTableRowCell('${pub.pub_views}', 3)
-                    ]))));
-  }
-
-  Widget _buildTableRowCell(String text, int type) {
-    return SizedBox(
-        width: DynamicSizeService.calculateWidthSize(context, 0.09),
-        child: SelectableText(text,
-            style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: DynamicSizeService.calculateAspectRatioSize(
-                    context, 0.013))));
-  }
-
-  Widget _buildAnalyticsCard(IconData icon, num data, String label,
-      String description, BuildContext context) {
+  Widget _buildEmptyState() {
     return Padding(
-        padding: EdgeInsets.all(
-            DynamicSizeService.calculateAspectRatioSize(context, 0.025)),
-        child: InkWell(
-            onTap: () {},
-            child: Container(
-                height: DynamicSizeService.calculateHeightSize(context, 0.25),
-                width: DynamicSizeService.calculateWidthSize(context, 0.30),
-                decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 255, 255, 255),
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.6),
-                        spreadRadius: 4,
-                        blurRadius: 13,
-                        offset: Offset(0, 3),
-                      )
-                    ]),
-                child: Padding(
-                    padding: EdgeInsets.all(
-                        DynamicSizeService.calculateAspectRatioSize(
-                            context, 0.016)),
-                    child: Column(children: [
-                      SizedBox(
-                          height: DynamicSizeService.calculateHeightSize(
-                              context, 0.010)),
-                      Row(children: [
-                        Icon(icon,
-                            size: DynamicSizeService.calculateAspectRatioSize(
-                                context, 0.045)),
-                        SizedBox(
-                            width: DynamicSizeService.calculateWidthSize(
-                                context, 0.015)),
-                        Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                              AnimatedFlipCounter(
-                                  value: data,
-                                  duration: Duration(milliseconds: 1000),
-                                  textStyle: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.038),
-                                      color: Color.fromARGB(250, 13, 46, 102))),
-                              Text(label,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.012),
-                                      color: Color.fromARGB(250, 13, 46, 102))),
-                              SizedBox(
-                                  height:
-                                      DynamicSizeService.calculateHeightSize(
-                                          context, 0.003)),
-                              SizedBox(
-                                  width: DynamicSizeService.calculateWidthSize(
-                                      context, 0.030),
-                                  child: Divider(
-                                      thickness: 2.5,
-                                      color: Color.fromARGB(250, 13, 46, 102))),
-                              SizedBox(
-                                  height:
-                                      DynamicSizeService.calculateHeightSize(
-                                          context, 0.005)),
-                              Text(description,
-                                  softWrap: true,
-                                  overflow: TextOverflow.fade,
-                                  style: TextStyle(
-                                      color: Color.fromARGB(191, 0, 0, 0),
-                                      fontSize: DynamicSizeService
-                                          .calculateAspectRatioSize(
-                                              context, 0.012))),
-                              SizedBox(
-                                  height:
-                                      DynamicSizeService.calculateHeightSize(
-                                          context, 0.010))
-                            ]))
-                      ])
-                    ])))).increaseSizeOnHover(1.2));
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(Icons.article_outlined, size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            'No articles found',
+            style: GoogleFonts.montserrat(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search terms',
+            style: GoogleFonts.montserrat(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _refreshUserList() async {
-    setState(() {
-      isPubListLoaded = false;
-      PubDataFetch.clear();
-      PubDataDeployed.clear();
-    });
-
-    await _fetchPubList();
+  Widget _buildLoadingIndicator() {
+    return const Padding(
+      padding: EdgeInsets.all(40),
+      child: Center(
+        child: CircularProgressIndicator(color: _primaryColor, strokeWidth: 2),
+      ),
+    );
   }
 }

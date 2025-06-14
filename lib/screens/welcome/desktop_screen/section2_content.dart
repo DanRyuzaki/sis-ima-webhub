@@ -50,7 +50,7 @@ class Section2Content extends StatelessWidget {
               context)
         ])
       ])),
-      SizedBox(height: DynamicSizeService.calculateHeightSize(context, 0.10))
+      SizedBox(height: DynamicSizeService.calculateHeightSize(context, 0.09))
     ]);
   }
 
@@ -62,7 +62,7 @@ class Section2Content extends StatelessWidget {
         child: InkWell(
             onTap: () {},
             child: Container(
-                height: DynamicSizeService.calculateHeightSize(context, 0.24),
+                height: DynamicSizeService.calculateHeightSize(context, 0.25),
                 width: DynamicSizeService.calculateWidthSize(context, 0.40),
                 decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 255, 255, 255),

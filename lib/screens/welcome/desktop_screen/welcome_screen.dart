@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sis_project/constants.dart';
-import 'package:sis_project/screens/welcome/section1_content.dart';
-import 'package:sis_project/screens/welcome/section2_content.dart';
-import 'package:sis_project/screens/welcome/section3_content.dart';
+import 'package:sis_project/screens/welcome/desktop_screen/section1_content.dart';
+import 'package:sis_project/screens/welcome/desktop_screen/section2_content.dart';
+import 'package:sis_project/screens/welcome/desktop_screen/section3_content.dart';
 import 'package:sis_project/screens/welcome/widget_buildsocialsection.dart';
 import 'package:sis_project/services/dynamicsize_service.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +24,41 @@ final section3key = GlobalKey();
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
   bool isAuthToggled = false;
+
+  Map<String, GlobalKey> searchableContent = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(updateActiveSection);
+    _initializeSearchableContent();
+  }
+
+  void _initializeSearchableContent() {
+    searchableContent = {
+      'The Immaculate Mother Academy Inc': section1key,
+      'Immaculate Mother Academy': section1key,
+      'IMA': section1key,
+      'home': section1key,
+      'program offerings': section2key,
+      'pre-school': section2key,
+      'preschool': section2key,
+      'primary school': section2key,
+      'junior high school': section2key,
+      'senior high school': section2key,
+      'inquire': section2key,
+      'about us': section3key,
+      'mission': section3key,
+      'vision': section3key,
+      'objectives': section3key,
+      'advocate': section3key,
+      'education': section3key,
+      'learning': section3key,
+      'students': section3key,
+    };
+  }
 
   double getOffset(GlobalKey key) {
     final context = key.currentContext;
@@ -39,6 +73,56 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       duration: const Duration(seconds: 1),
       curve: Curves.easeInOut,
     );
+  }
+
+  void _performSearch(String searchTerm) {
+    if (searchTerm.isEmpty) return;
+
+    String normalizedSearch = searchTerm.toLowerCase().trim();
+
+    GlobalKey? targetKey;
+
+    // ignore: unused_local_variable
+    String? matchedTerm;
+
+    for (String key in searchableContent.keys) {
+      if (key.toLowerCase() == normalizedSearch) {
+        targetKey = searchableContent[key];
+        matchedTerm = key;
+        break;
+      }
+    }
+
+    if (targetKey == null) {
+      for (String key in searchableContent.keys) {
+        if (key.toLowerCase().contains(normalizedSearch) ||
+            normalizedSearch.contains(key.toLowerCase())) {
+          targetKey = searchableContent[key];
+          matchedTerm = key;
+          break;
+        }
+      }
+    }
+
+    if (targetKey != null) {
+      scrollToSection(targetKey);
+
+      String sectionName = '';
+      if (targetKey == section1key) {
+        sectionName = 'HOME';
+      } else if (targetKey == section2key) {
+        sectionName = 'INQUIRE';
+      } else if (targetKey == section3key) {
+        sectionName = 'ABOUT US';
+      }
+
+      if (sectionName.isNotEmpty) {
+        Provider.of<GlobalState>(context, listen: false)
+            .toggleActiveSection(sectionName);
+      }
+    } else {}
+
+    _searchController.clear();
   }
 
   void updateActiveSection() {
@@ -69,14 +153,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(updateActiveSection);
-  }
-
-  @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -191,6 +270,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: WELCOME_NAVBAR[0],
                 hintStyle: TextStyle(
@@ -204,7 +284,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     horizontal:
                         DynamicSizeService.calculateWidthSize(context, 0.015)),
               ),
-              onChanged: (value) => print("Search input: $value"),
+              onSubmitted: _performSearch,
+              onChanged: (value) {
+                print("Search input: $value");
+              },
             )));
   }
 
