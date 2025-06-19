@@ -13,4 +13,4 @@ You are **not permitted** to:
 
 Full license text: https://creativecommons.org/licenses/by-nc-nd/4.0/
 
-© Ryuzaki Systems, 2025
+Copyright Ryuzaki Systems, 2025

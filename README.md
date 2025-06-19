@@ -101,7 +101,7 @@ Unless required by applicable law or agreed to in writing, the code and related 
 without warranties or conditions of any kind, either express or implied. Under this license, you may not use the code for commercial purposes,
 you may not distribute modified versions, and you may not sublicense or patent any part of the work. Forks and personal or educational inspection are permitted.
 
-© Ryuzaki Systems, 2025
+Copyright Ryuzaki Systems, 2025
 
 ```
 
