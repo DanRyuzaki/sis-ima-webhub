@@ -3,7 +3,7 @@
 
 [![Github Star](https://img.shields.io/github/stars/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](https://github.com/DanRyuzaki/sis-ima-webhub) 
 [![Github Fork](https://img.shields.io/github/forks/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](https://github.com/DanRyuzaki/sis-ima-webhub) 
-[![License](https://img.shields.io/github/license/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](./LICENSE)
+[![License](https://img.shields.io/github/license/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](./LICENSE.md)
 
 A PWA-based Student Information System built using the Flutter SDK, designed to streamline student data management for Immaculate Mother Academy, Inc. (406747).
 
