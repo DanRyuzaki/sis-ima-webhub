@@ -1,9 +1,12 @@
 # 📚 IMA WebHub: Student Information System (SIS)
-[![Developed by Ryuzaki Systems](https://img.shields.io/badge/Developed%20by-Ryuzaki%20Systems-blue.svg?longCache=true&style=for-the-badge)](https://facebook.com/ryuzaxify)
+[![Developed by Ryuzaki Systems](https://img.shields.io/badge/Developed%20by-Ryuzaki%20Systems-white.svg?longCache=true&style=for-the-badge)](https://facebook.com/ryuzaxify)
 
 [![Github Star](https://img.shields.io/github/stars/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](https://github.com/DanRyuzaki/sis-ima-webhub) 
 [![Github Fork](https://img.shields.io/github/forks/DanRyuzaki/sis-ima-webhub.svg?style=for-the-badge)](https://github.com/DanRyuzaki/sis-ima-webhub) 
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC--BY--NC--ND--4.0-lightgrey.svg?style=for-the-badge)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+
+[![URL 1](https://img.shields.io/badge/URL%201-https%3A%2F%2Fsis--ima.web.app%2F-blue.svg?longCache=true&style=for-the-badge)](https://sis-ima.web.app/) [![URL 2](https://img.shields.io/badge/URL%202-https%3A%2F%2Fimmaculatemotheracademy.web.app%2F-blue.svg?longCache=true&style=for-the-badge)](https://immaculatemotheracademy.web.app/)
+
 
 
 A SPA-PWA-based Student Information System built using the Flutter SDK, designed to streamline student data management for Immaculate Mother Academy, Inc. (406747).
