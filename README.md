@@ -12,10 +12,10 @@
 A SPA-PWA-based Student Information System built using the Flutter SDK, designed to streamline student data management for Immaculate Mother Academy, Inc. (406747).
 
 As part of a system acquisition initiative led and developed by Ryuzaki Systems, this project was designed and implemented by the college students from National University – Fairview:
- - Az. T. *will reveal the name once permitted.*
- - Pa. O.  *will reveal the name once permitted.*
- - Jo. Ga. T. *will reveal the name once permitted.*
- - Da. A. *will reveal the name once permitted.*
+ - **Aziel Tornea**
+ - Patrick Oliveros
+ - John Gabriel Tadeo
+ - Darren Avila
  
 The system supports progressive web application (PWA) functionality, ensuring cross-platform accessibility and a seamless user experience across devices.
 
